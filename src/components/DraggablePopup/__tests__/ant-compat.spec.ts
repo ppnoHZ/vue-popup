@@ -8,6 +8,28 @@ afterEach(() => {
   document.body.style.overflow = "";
 });
 describe("Ant Design Vue migration contract", () => {
+  it.each(["popup", "modal"] as const)(
+    "allows ordinary %s panels beyond legacy width/height defaults and exposes all resize directions",
+    async (variant) => {
+      vi.stubGlobal("innerWidth", 1600);
+      vi.stubGlobal("innerHeight", 1100);
+      try {
+        const w = mount(DraggablePopup, {
+          props: { modelValue: true, variant, width: 1200, height: 900 },
+          attachTo: document.body,
+        });
+        await flushPromises();
+        expect(w.vm.getRect().width).toBe(1200);
+        expect(w.vm.getRect().height).toBe(900);
+        expect(document.querySelectorAll("[data-handle]")).toHaveLength(8);
+        await w.setProps({ maxWidth: 700, maxHeight: 600 });
+        expect(w.vm.getRect().width).toBe(700);
+        expect(w.vm.getRect().height).toBe(600);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    },
+  );
   it("lets drawers span the viewport on wide screens and still honors explicit maxWidth", async () => {
     vi.stubGlobal("innerWidth", 1600);
     try {

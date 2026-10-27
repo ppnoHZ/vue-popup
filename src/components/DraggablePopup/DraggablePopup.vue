@@ -167,12 +167,8 @@ const effectiveVariant = computed(() =>
 const limits = computed(() => ({
   minWidth: props.minWidth,
   minHeight: props.minHeight,
-  maxWidth:
-    props.maxWidth ??
-    (effectiveVariant.value === "drawer" ? Number.MAX_SAFE_INTEGER : 960),
-  maxHeight:
-    props.maxHeight ??
-    (effectiveVariant.value === "drawer" ? Number.MAX_SAFE_INTEGER : 800),
+  maxWidth: props.maxWidth ?? Number.MAX_SAFE_INTEGER,
+  maxHeight: props.maxHeight ?? Number.MAX_SAFE_INTEGER,
   boundaryPadding: props.boundaryPadding,
 }));
 const initialWidth = () =>
@@ -207,18 +203,7 @@ const initialMode = (): PopupMode =>
       ? "centered"
       : "anchored";
 const effectiveHandles = computed<ResizeHandle[]>(
-  () =>
-    props.resizeHandles ??
-    (effectiveVariant.value === "drawer"
-      ? [
-          ({ right: "ml", left: "mr", top: "bm", bottom: "tm" } as const)[
-            side.value
-          ],
-          ...(side.value === "left" || side.value === "right"
-            ? (["tm", "bm"] as const)
-            : (["ml", "mr"] as const)),
-        ]
-      : ["br"]),
+  () => props.resizeHandles ?? ["tl", "tm", "tr", "mr", "br", "bm", "bl", "ml"],
 );
 const slots = defineSlots<{
   trigger(): unknown;

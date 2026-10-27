@@ -247,7 +247,7 @@ test("resize extremes, disabled interactions, outside close and pointercancel", 
   expect(r.height).toBe(180);
   await drag(page, p.locator('[data-handle="br"]'), 2000, 2000);
   r = await box(p);
-  expect(r.width).toBe(960);
+  expect(r.width).toBeCloseTo(page.viewportSize()!.width - 8 - r.x, 0);
   expect(r.height).toBeLessThanOrEqual(800);
   await within(p, page);
   const title = p.locator(".draggable-popup__title");
@@ -581,7 +581,7 @@ for (const handle of ["ml", "mr"])
     const y = b!.y + b!.height / 2;
     await page.mouse.move(b!.x + b!.width / 2, y);
     await page.mouse.down();
-    const extreme = handle === "ml" ? 0 : 1050;
+    const extreme = handle === "ml" ? 0 : 1100;
     await page.mouse.move(extreme, y, { steps: 10 });
     const maxed = await box(p);
     await page.mouse.move(extreme + (handle === "ml" ? 5 : -5), y);
@@ -617,4 +617,79 @@ test("a default right drawer can resize left and right all the way to the viewpo
   await expect
     .poll(() => box(p))
     .toEqual({ x: 8, y: 8, width: 1084, height: 520 });
+});
+test("ordinary popup edges can be grabbed away from their midpoint and expanded to both viewport boundaries", async ({
+  page,
+}) => {
+  await page.getByTestId("trigger-0").click();
+  const p = panel(page);
+  await expect(p).not.toHaveClass(/dp-panel-enter-active/);
+  async function pull(handle: string, nearTop: boolean, dx: number) {
+    const grip = p.locator(`[data-handle="${handle}"]`);
+    await grip.hover();
+    const b = await grip.boundingBox();
+    const x = b!.x + b!.width / 2,
+      y = nearTop ? b!.y + 12 : b!.y + b!.height - 12;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx, y, { steps: 20 });
+    await page.mouse.up();
+  }
+  await pull("ml", true, -2000);
+  expect((await box(p)).x).toBe(8);
+  await pull("mr", false, 2000);
+  await expect.poll(async () => (await box(p)).width).toBe(1084);
+  await within(p, page);
+});
+test("default Modal supports horizontal resize beyond 960px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.getByTestId("migration-modal-trigger").click();
+  const p = page.getByRole("dialog", { name: "Antdv Modal API" });
+  await drag(page, p.locator('[data-handle="ml"]'), -2000, 0);
+  expect((await box(p)).x).toBe(8);
+  await drag(page, p.locator('[data-handle="mr"]'), 2000, 0);
+  await expect.poll(async () => (await box(p)).width).toBe(1584);
+  await within(p, page);
+});
+test("resizing does not repeatedly rerender the Demo parent and all of its forms", async ({
+  page,
+}) => {
+  await page.getByTestId("trigger-0").click();
+  const p = panel(page);
+  await p.getByPlaceholder("可正常输入与选字").fill("keep editing");
+  const grip = p.locator('[data-handle="br"]');
+  await grip.hover();
+  await page.evaluate(() => {
+    // Development-only measurement of the root's updated hook; no app state or geometry is altered.
+    const root = (
+      document.querySelector("#app") as HTMLElement & {
+        __vue_app__: { _instance: { u?: Array<() => void> } };
+      }
+    ).__vue_app__._instance;
+    document.documentElement.dataset.parentUpdates = "0";
+    root.u = [
+      ...(root.u ?? []),
+      () => {
+        document.documentElement.dataset.parentUpdates = String(
+          Number(document.documentElement.dataset.parentUpdates) + 1,
+        );
+      },
+    ];
+  });
+  const b = await grip.boundingBox();
+  await page.mouse.move(b!.x + 5, b!.y + 5);
+  await page.mouse.down();
+  await page.mouse.move(b!.x + 165, b!.y + 105, { steps: 30 });
+  await page.mouse.up();
+  expect(
+    await page.evaluate(() =>
+      Number(document.documentElement.dataset.parentUpdates),
+    ),
+  ).toBeLessThanOrEqual(4);
+  await expect(p.getByPlaceholder("可正常输入与选字")).toHaveValue(
+    "keep editing",
+  );
+  expect((await box(p)).width).toBe(520);
 });

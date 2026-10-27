@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
+import PanelDiagnostics from "./PanelDiagnostics.vue";
 import { useAntTheme } from "./useAntTheme";
 import {
   DraggablePopup,
@@ -60,7 +61,9 @@ function log(i: number, name: string, value?: unknown) {
   logs.value = logs.value.slice(0, 30);
 }
 function rect(i: number, value: PopupRect) {
-  log(i, "rect", value);
+  // Live geometry belongs to the diagnostics child. Rebuilding event strings and
+  // the parent form/Select trees on every pointer sample makes resizing stutter.
+  states[i] = { ...states[i], rect: value };
 }
 function popupContainer(trigger: HTMLElement) {
   return (trigger.closest(".draggable-popup") as HTMLElement) || document.body;
@@ -338,32 +341,19 @@ function popupContainer(trigger: HTMLElement) {
         </div>
       </div>
     </div>
-    <section class="inspector">
-      <h2>状态与事件</h2>
-      <pre data-testid="migration-events">{{ migrationEvents }}</pre>
-      <pre data-testid="drawer-state">{{
-        {
-          name: "右侧抽屉",
-          visible: drawerOpen,
-          mode: drawerMode,
-          maximized: drawerMaximized,
-          rect: drawer?.getRect(),
-        }
-      }}</pre>
-      <pre v-for="(name, i) in names" :key="name" data-testid="states">{{
-        {
-          name,
-          visible: visible[i],
-          mode: states[i]?.mode ?? "anchored",
-          placement: states[i]?.placement ?? placement,
-          maximized: states[i]?.maximized ?? false,
-          rect: panels[i]?.getRect(),
-        }
-      }}</pre>
-      <ol>
-        <li v-for="(line, i) in logs" :key="i">{{ line }}</li>
-      </ol>
-    </section>
+    <PanelDiagnostics
+      :panels="panels"
+      :names="names"
+      :visible="visible"
+      :states="states"
+      :logs="logs"
+      :drawer="drawer"
+      :drawer-open="drawerOpen"
+      :drawer-mode="drawerMode"
+      :drawer-maximized="drawerMaximized"
+      :migration-events="migrationEvents"
+      :placement="placement"
+    />
     <p class="end">滚动页面测试锚点跟随；拖动之后面板保持视口坐标。</p>
   </main>
 </template>

@@ -24,6 +24,32 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("DraggablePopup contract", () => {
+  it("resizes from a sampled in-flight ordinary panel geometry without jumping to legacy maxWidth", async () => {
+    const w = mount(Popup, {
+      props: { modelValue: true },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    const p = document.querySelector<HTMLElement>(".draggable-popup")!;
+    vi.spyOn(p, "getBoundingClientRect").mockReturnValue({
+      x: 8,
+      y: 8,
+      width: 1000,
+      height: 400,
+      top: 8,
+      left: 8,
+      right: 1008,
+      bottom: 408,
+      toJSON: () => ({}),
+    });
+    pointer(p.querySelector('[data-handle="mr"]')!, "pointerdown", 1008, 200);
+    expect(w.vm.getRect().width).toBe(1000);
+    pointer(window, "pointermove", 998, 200);
+    expect(w.vm.getRect().width).toBe(990);
+    expect(w.vm.getRect().x).toBe(8);
+    pointer(window, "pointerup", 998, 200);
+    w.unmount();
+  });
   it.each(["ml", "mr"] as const)(
     "reverses immediately after %s resize overshoots max/min without a dead zone",
     async (handle) => {

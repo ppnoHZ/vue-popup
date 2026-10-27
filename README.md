@@ -1,6 +1,6 @@
 # Vue DraggablePopup
 
-缩放触及尺寸限制或视口边界后，反向拉动立即响应。Drawer 默认宽高只受视口限制，可横向拉至安全边缘；需要业务上限时显式配置 maxWidth/maxHeight。Popup/Modal 默认上限仍为 960×800。
+所有面板默认支持四边和四角缩放，宽高仅受视口安全边界限制；业务上限可显式配置 maxWidth/maxHeight。触限后反向拉动立即响应。Demo 将实时诊断区隔离为独立组件，避免连续缩放时反复重绘整页 Antdv 表单。
 
 支持视口边缘吸附（默认 16px），可通过 `snapToEdge` / `snapThreshold` 配置；Demo 提供开关和吸附距离输入框。边缘及角落吸附不改变窗口尺寸，拖离边缘可继续自由移动。
 
