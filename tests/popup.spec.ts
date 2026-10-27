@@ -567,3 +567,54 @@ test("right drawer uses the same corner snapping without changing its size", asy
   expect(await box(p)).toEqual({ x: 8, y: 8, width: 420, height: 520 });
   await expect(p).toHaveAttribute("data-mode", "detached");
 });
+for (const handle of ["ml", "mr"])
+  test(`horizontal ${handle} resizing reverses immediately after hitting maximum and minimum limits`, async ({
+    page,
+  }) => {
+    await page.getByTestId("trigger-0").click();
+    const p = panel(page);
+    await expect(p).not.toHaveClass(/dp-panel-enter-active/);
+    const initial = await box(p),
+      grip = p.locator(`[data-handle="${handle}"]`);
+    await grip.hover();
+    const b = await grip.boundingBox();
+    const y = b!.y + b!.height / 2;
+    await page.mouse.move(b!.x + b!.width / 2, y);
+    await page.mouse.down();
+    const extreme = handle === "ml" ? 0 : 1050;
+    await page.mouse.move(extreme, y, { steps: 10 });
+    const maxed = await box(p);
+    await page.mouse.move(extreme + (handle === "ml" ? 5 : -5), y);
+    await expect
+      .poll(async () => (await box(p)).width)
+      .toBeCloseTo(maxed.width - 5, 0);
+    if (handle === "ml")
+      expect((await box(p)).x + (await box(p)).width).toBeCloseTo(
+        initial.x + initial.width,
+        0,
+      );
+    else expect((await box(p)).x).toBeCloseTo(initial.x, 0);
+    const shrink = handle === "ml" ? 500 : 30;
+    await page.mouse.move(shrink, y, { steps: 10 });
+    expect((await box(p)).width).toBe(260);
+    await page.mouse.move(shrink + (handle === "ml" ? -10 : 10), y);
+    await expect.poll(async () => (await box(p)).width).toBe(270);
+    await page.mouse.up();
+    await within(p, page);
+  });
+test("a default right drawer can resize left and right all the way to the viewport safe edges", async ({
+  page,
+}) => {
+  await page.getByTestId("drawer-trigger").click();
+  const p = page.getByRole("dialog", { name: "右侧抽屉" });
+  await drag(page, p.locator('[data-handle="ml"]'), -2000, 0);
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 8, y: 8, width: 1084, height: 520 });
+  await drag(page, p.locator('[data-handle="mr"]'), -200, 0);
+  expect((await box(p)).width).toBe(884);
+  await drag(page, p.locator('[data-handle="mr"]'), 2000, 0);
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 8, y: 8, width: 1084, height: 520 });
+});

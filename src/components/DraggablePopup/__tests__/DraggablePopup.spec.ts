@@ -24,6 +24,46 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("DraggablePopup contract", () => {
+  it.each(["ml", "mr"] as const)(
+    "reverses immediately after %s resize overshoots max/min without a dead zone",
+    async (handle) => {
+      const w = mount(Popup, {
+        props: { modelValue: true, maxWidth: 500, resizeHandles: [handle] },
+        attachTo: document.body,
+      });
+      await flushPromises();
+      const p = document.querySelector<HTMLElement>(".draggable-popup")!;
+      vi.spyOn(p, "getBoundingClientRect").mockReturnValue({
+        x: 200,
+        y: 200,
+        width: 360,
+        height: 280,
+        top: 200,
+        left: 200,
+        right: 560,
+        bottom: 480,
+        toJSON: () => ({}),
+      });
+      const direction = handle === "ml" ? -1 : 1,
+        startX = handle === "ml" ? 200 : 560;
+      pointer(p.querySelector("[data-handle]")!, "pointerdown", startX, 340);
+      pointer(window, "pointermove", startX + direction * 1000, 340);
+      expect(w.vm.getRect().width).toBe(500);
+      pointer(window, "pointermove", startX + direction * 990, 340);
+      expect(w.vm.getRect().width).toBe(490);
+      pointer(window, "pointermove", startX - direction * 1000, 340);
+      expect(w.vm.getRect().width).toBe(260);
+      pointer(window, "pointermove", startX - direction * 990, 340);
+      expect(w.vm.getRect().width).toBe(270);
+      const r = w.vm.getRect();
+      expect(handle === "ml" ? r.x + r.width : r.x).toBe(
+        handle === "ml" ? 560 : 200,
+      );
+      pointer(window, "pointerup", startX, 340);
+      expect(w.emitted("resize-end")).toHaveLength(1);
+      w.unmount();
+    },
+  );
   it.each([
     { snapToEdge: true, keepInViewport: true, x: 8 },
     { snapToEdge: false, keepInViewport: true, x: 20 },

@@ -65,7 +65,7 @@ const props = withDefaults(defineProps<PopupProps>(), {
   height: undefined,
   minWidth: 260,
   minHeight: 180,
-  maxWidth: 960,
+  maxWidth: undefined,
   maxHeight: undefined,
   draggable: true,
   resizable: true,
@@ -167,7 +167,9 @@ const effectiveVariant = computed(() =>
 const limits = computed(() => ({
   minWidth: props.minWidth,
   minHeight: props.minHeight,
-  maxWidth: props.maxWidth,
+  maxWidth:
+    props.maxWidth ??
+    (effectiveVariant.value === "drawer" ? Number.MAX_SAFE_INTEGER : 960),
   maxHeight:
     props.maxHeight ??
     (effectiveVariant.value === "drawer" ? Number.MAX_SAFE_INTEGER : 800),
@@ -612,26 +614,34 @@ function start(e: PointerEvent, handle?: ResizeHandle) {
     pointer = e.pointerId,
     kind = handle ? "resize" : "drag";
   const captureTarget = e.currentTarget as HTMLElement;
+  // Rebase resizing at every pointer sample after constraints are applied.
+  // Discard overshoot instead of storing a dead zone beyond min/max or viewport edges.
+  let resizeBase = { ...initial },
+    resizeX = x,
+    resizeY = y;
   if (e.isTrusted) captureTarget.setPointerCapture?.(pointer);
   active.value = true;
   if (handle) emit("resize-start", getRect());
   else emit("drag-start", getRect());
   const move = (event: PointerEvent) => {
     if (event.pointerId !== pointer) return;
-    if (handle)
+    if (handle) {
       Object.assign(
         rect,
         resizeRect(
-          initial,
+          resizeBase,
           handle,
-          event.clientX - x,
-          event.clientY - y,
+          event.clientX - resizeX,
+          event.clientY - resizeY,
           limits.value,
           props.keepInViewport ? window.innerWidth : Number.MAX_SAFE_INTEGER,
           props.keepInViewport ? window.innerHeight : Number.MAX_SAFE_INTEGER,
         ),
       );
-    else {
+      resizeBase = getRect();
+      resizeX = event.clientX;
+      resizeY = event.clientY;
+    } else {
       rect.x = initial.x + event.clientX - x;
       rect.y = initial.y + event.clientY - y;
       if (props.keepInViewport) {

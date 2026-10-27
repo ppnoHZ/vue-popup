@@ -8,6 +8,21 @@ afterEach(() => {
   document.body.style.overflow = "";
 });
 describe("Ant Design Vue migration contract", () => {
+  it("lets drawers span the viewport on wide screens and still honors explicit maxWidth", async () => {
+    vi.stubGlobal("innerWidth", 1600);
+    try {
+      const w = mount(DraggableDrawer, {
+        props: { open: true, width: 1200 },
+        attachTo: document.body,
+      });
+      await flushPromises();
+      expect(w.vm.getRect().width).toBe(1200);
+      await w.setProps({ maxWidth: 800 });
+      expect(w.vm.getRect().width).toBe(800);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
   it.each(["left", "right", "top", "bottom"] as const)(
     "supports Drawer placement=%s and changes side without retaining the previous full axis",
     async (placement) => {

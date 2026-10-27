@@ -36,30 +36,30 @@ const popup = ref<PopupExpose>();
 
 完整类型见 `types.ts`。`Placement` 为 Floating UI 的 12 种方向；`ResizeHandle` 为 `tl | tm | tr | mr | br | bm | bl | ml`。
 
-| 属性                  | 类型                       | 默认                                                             |
-| --------------------- | -------------------------- | ---------------------------------------------------------------- |
-| modelValue            | boolean，兼容默认 v-model  | —                                                                |
-| open / visible        | boolean，Antdv 风格绑定    | —                                                                |
-| variant               | 'popup'、'drawer'、'modal' | popup（open/visible 无锚点时自动 modal）                         |
-| maximizable           | boolean                    | true                                                             |
-| title                 | string                     | Popup                                                            |
-| placement             | Placement                  | bottom-start                                                     |
-| offset                | number                     | 8                                                                |
-| boundaryPadding       | number                     | 8                                                                |
-| autoFlip / autoShift  | boolean                    | true / true                                                      |
-| width / height        | number                     | 360 / 280                                                        |
-| minWidth / minHeight  | number                     | 260 / 180                                                        |
-| maxWidth / maxHeight  | number                     | maxWidth=960；Popup/Modal maxHeight=800；Drawer 默认仅受视口限制 |
-| draggable / resizable | boolean                    | true / true                                                      |
-| resizeHandles         | ResizeHandle[]             | popup: ['br']；右侧抽屉: ['ml','tm','bm']，其他方向对应调整      |
-| keepInViewport        | boolean                    | true                                                             |
-| snapToEdge            | boolean                    | true                                                             |
-| snapThreshold         | number                     | 16px                                                             |
-| closeOnOutsideClick   | boolean                    | false                                                            |
-| closeOnEsc            | boolean                    | true                                                             |
-| teleportTo            | string 或 HTMLElement      | body                                                             |
-| zIndex                | number                     | 2000                                                             |
-| trigger               | 'click' 或 'manual'        | click                                                            |
+| 属性                  | 类型                       | 默认                                                        |
+| --------------------- | -------------------------- | ----------------------------------------------------------- |
+| modelValue            | boolean，兼容默认 v-model  | —                                                           |
+| open / visible        | boolean，Antdv 风格绑定    | —                                                           |
+| variant               | 'popup'、'drawer'、'modal' | popup（open/visible 无锚点时自动 modal）                    |
+| maximizable           | boolean                    | true                                                        |
+| title                 | string                     | Popup                                                       |
+| placement             | Placement                  | bottom-start                                                |
+| offset                | number                     | 8                                                           |
+| boundaryPadding       | number                     | 8                                                           |
+| autoFlip / autoShift  | boolean                    | true / true                                                 |
+| width / height        | number                     | 360 / 280                                                   |
+| minWidth / minHeight  | number                     | 260 / 180                                                   |
+| maxWidth / maxHeight  | number                     | Popup/Modal 为 960 / 800；Drawer 默认仅受视口限制           |
+| draggable / resizable | boolean                    | true / true                                                 |
+| resizeHandles         | ResizeHandle[]             | popup: ['br']；右侧抽屉: ['ml','tm','bm']，其他方向对应调整 |
+| keepInViewport        | boolean                    | true                                                        |
+| snapToEdge            | boolean                    | true                                                        |
+| snapThreshold         | number                     | 16px                                                        |
+| closeOnOutsideClick   | boolean                    | false                                                       |
+| closeOnEsc            | boolean                    | true                                                        |
+| teleportTo            | string 或 HTMLElement      | body                                                        |
+| zIndex                | number                     | 2000                                                        |
+| trigger               | 'click' 或 'manual'        | click                                                       |
 
 `width/height` 仅在实例初始化时读取。后续改变 Props 不覆盖用户尺寸，`resetSize()` 读取最新 Props。关闭再打开保留最近有效尺寸。视口不足时，有效最大尺寸受视口安全边距限制，有效最小尺寸随之下降；视口恢复时不会自动放大已裁剪尺寸。`keepInViewport=false` 允许自由模式位置逃离视口，适用于调用方明确需要的场景；默认开启。
 
@@ -134,7 +134,7 @@ interface PopupRect {
 ```
 
 - 抽屉为同一个基础组件的 `variant='drawer'`，保持非模态、无蒙层、不锁页面滚动。支持 `trigger='manual'` + 外部 v-model，此时不需要 trigger 插槽，不会创建空的可聚焦触发器。
-- 打开时为 `docked`，位于视口右侧安全边距，宽度使用配置/上次用户宽度。指定 height（例如 520）时以其为初始高度，可向上或向下调整并超出初始值；未指定时尽可能铺满视口。Drawer 默认不再受 800px 高度限制；显式 maxHeight 仍生效，最终受安全边距约束。
+- 打开时为 `docked`，位于视口右侧安全边距，宽度使用配置/上次用户宽度。指定 height（例如 520）时以其为初始高度，可向上或向下调整并超出初始值；未指定时尽可能铺满视口。Drawer 默认宽高只受视口限制，不再有 960px 宽度和 800px 高度上限；显式 maxWidth/maxHeight 仍生效，最终受安全边距约束。
 - 第一次拖动标题栏或缩放后变成 `detached`；八方向缩放规则与 Popup 相同。复位回右侧，关闭重开保留用户有效尺寸；未配置 height 的全高抽屉重新停靠时再次铺满视口。已经贴住视口底边时，底部手柄不能向屏幕外增长，可拖上边手柄增高，或先移动面板留出空间。
 - Popup 和抽屉标题栏默认都有“放大面板/还原面板”按钮，`maximizable=false` 可关闭该能力。放大使用整个视口减 boundaryPadding，刻意不受普通 maxWidth/maxHeight 限制；不调用浏览器 Fullscreen API。
 - 放大状态独立于模式，保留原始 rect 和 mode，暂停锚点定位与拖动/缩放，隐藏 resize 手柄；窗口大小改变仍同步填满安全区域。`data-maximized` 可读取当前状态。
@@ -149,6 +149,7 @@ interface PopupRect {
 - 独立的窗口 resize 回调不与 autoUpdate 共用引用，避免其清理时误移除自由模式的视口约束监听；视口改变会先结束正在进行的交互，再更新几何。
 - 第一次开始交互时采样真实 `getBoundingClientRect()`，再切换 detached。自由浮窗不再被锚点重算覆盖。
 - 8 个手柄始终保持对侧边固定，先计算有效尺寸上下界，再同步 x/y。所有 Pointer Events 属于当前指针，结束时统一清理。捕获使指针离开面板后仍可结束。
+- 缩放到达最小/最大尺寸或视口边界时丢弃超限位移，每次指针采样都以当前有效 rect 为基准。反向拉动立即响应，不需要先走回超出限制的距离。Popup/Modal 保留默认 maxWidth=960，如需铺满更宽视口可显式传入更大的 maxWidth。
 - 多实例从当前 DOM 层级计算活动层级，不依赖全局可变计数器。只有最上层面板响应 Esc。
 - 默认 Teleport 到 body，逃离 trigger 祖先的 transform 和 overflow 裁剪。自定义 teleportTo 目标应放在无 transform/filter/perspective/contain 固定定位包含块的顶层节点内，否则浏览器 fixed 包含块规则仍适用。
 - 锚点模式移除实际 trigger 元素时请求 `anchor-removed` 关闭；detached 保持打开。通过 v-if 卸载整个组件时会直接清理。

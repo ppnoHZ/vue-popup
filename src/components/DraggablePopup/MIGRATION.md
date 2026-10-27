@@ -75,7 +75,7 @@ function save() {
 | mask / maskClosable / maskStyle       | 具名 Modal/Drawer 默认有 mask，maskClosable 默认 true；原 DraggablePopup 默认无 mask；有 mask 时管理 body 滚动锁，多个实例关闭最后一层才恢复 |
 | afterClose                            | 关闭过渡结束后调用；motion=false 或减少动态效果时立即完成                                                                                    |
 
-**尺寸规则差异**：width/height 是初始尺寸，不是持续受控尺寸，后续更改后调用 `resetSize()`；这是为了保留用户拖动缩放的结果。左右 Drawer 指定 height 时保留该初始高度，未指定时铺满视口；上下 Drawer 的 width 同理。Drawer 默认不设置 800px 高度上限，只受视口限制；Popup/Modal 的默认 maxHeight 仍为 800，所有入口均支持显式 maxHeight。右侧 Drawer 默认提供左边、上边、下边手柄，可以将高度增大至超过初始值。自由模式、放大/还原沿用已有几何规则。
+**尺寸规则差异**：width/height 是初始尺寸，不是持续受控尺寸，后续更改后调用 `resetSize()`；这是为了保留用户拖动缩放的结果。左右 Drawer 指定 height 时保留该初始高度，未指定时铺满视口；上下 Drawer 的 width 同理。Drawer 默认宽高只受视口限制；Popup/Modal 的默认 maxWidth/maxHeight 仍为 960/800，所有入口均支持显式上限。右侧 Drawer 默认提供左边、上边、下边手柄，可以将高度增大至超过初始值。缩放触及限制后反向移动立即响应，不累计超限位移。自由模式、放大/还原沿用已有几何规则。
 
 ## Slots 对照
 

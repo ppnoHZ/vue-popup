@@ -7,10 +7,12 @@
 | TypeScript    | npm run typecheck | 通过，无类型错误                            |
 | ESLint        | npm run lint      | 通过，无错误、无警告                        |
 | 生产构建      | npm run build     | 通过，无大文件警告                          |
-| 单元/组件测试 | npm test          | 47/47 通过，3 个测试文件                    |
-| 浏览器交互    | npm run test:e2e  | 20/20 通过，页面异常与 console.error 均为空 |
+| 单元/组件测试 | npm test          | 50/50 通过，3 个测试文件                    |
+| 浏览器交互    | npm run test:e2e  | 23/23 通过，页面异常与 console.error 均为空 |
 
 ## 逐项结果
+
+2026-10-28 左右缩放修复：先通过失败用例复现 ml/mr 缩放越过上限后反向移动 10px 仍无响应；改为按当前有效几何与上次指针位置增量计算，丢弃超限位移。新增 min/max 与视口边界的同手势往返测试。Drawer 默认 maxWidth 改为视口约束，显式 maxWidth 继续有效，Popup/Modal 默认 960 保留；新增 Drawer 拉至视口左右安全边界的浏览器用例。
 
 新增边缘吸附验收：默认 16px；四边、角落、移出范围、阈值设置、关闭吸附和 keepInViewport=false 均有单元验证；浏览器额外验证四边与角落、关闭/自定义阈值及抽屉复用。吸附后尺寸不变，mode=detached，drag-end 与实际 rect 一致。吸附仅作用于标题栏拖动。
 
