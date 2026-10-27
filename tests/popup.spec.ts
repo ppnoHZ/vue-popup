@@ -21,6 +21,8 @@ async function within(el: Locator, page: Page) {
     .toBe(true);
 }
 async function drag(page: Page, el: Locator, dx: number, dy: number) {
+  // Wait until an entering drawer reveals this handle and it can receive input.
+  await el.hover();
   const b = await el.boundingBox();
   await page.mouse.move(b!.x + b!.width / 2, b!.y + b!.height / 2);
   await page.mouse.down();
@@ -208,6 +210,10 @@ test("AC16: keyboard activation, escape and focus restoration", async ({
   await panel(page).getByRole("button", { name: "复位位置" }).focus();
   await page.keyboard.press("Tab");
   await expect(
+    panel(page).getByRole("button", { name: "放大面板" }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
     panel(page).getByRole("button", { name: "关闭面板" }),
   ).toBeFocused();
   await page.keyboard.press("Enter");
@@ -265,4 +271,243 @@ test("resize extremes, disabled interactions, outside close and pointercancel", 
   await expect(p).toHaveAttribute("data-mode", "anchored");
   await page.locator("h1").click();
   await expect(p).toHaveCount(0);
+});
+test("popup maximizes, ignores drag, follows viewport and restores anchored or detached geometry", async ({
+  page,
+}) => {
+  await page.getByTestId("trigger-4").click();
+  const p = panel(page, 4);
+  await within(p, page);
+  const original = await box(p);
+  await p.getByRole("button", { name: "放大面板" }).click();
+  await expect(p).toHaveAttribute("data-maximized", "true");
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 8, y: 8, width: 1084, height: 784 });
+  await expect(p.locator("[data-handle]")).toHaveCount(0);
+  await drag(page, p.locator(".draggable-popup__title"), 50, 50);
+  expect(await box(p)).toEqual({ x: 8, y: 8, width: 1084, height: 784 });
+  await p.getByRole("button", { name: "还原面板" }).click();
+  await expect.poll(() => box(p)).toEqual(original);
+  await expect(p).toHaveAttribute("data-mode", "anchored");
+  await drag(page, p.locator(".draggable-popup__title"), 60, 20);
+  const detached = await box(p);
+  await p.getByRole("button", { name: "放大面板" }).click();
+  await p.getByRole("button", { name: "还原面板" }).click();
+  await expect.poll(() => box(p)).toEqual(detached);
+  await expect(p).toHaveAttribute("data-mode", "detached");
+  await p.getByRole("button", { name: "放大面板" }).click();
+  await page.setViewportSize({ width: 320, height: 568 });
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 8, y: 8, width: 304, height: 552 });
+  await p.getByRole("button", { name: "还原面板" }).click();
+  await within(p, page);
+  await expect(p.getByRole("button", { name: "关闭面板" })).toBeVisible();
+});
+test("right drawer resizes without jump, detaches, resets, maximizes and preserves normal width after reopen", async ({
+  page,
+}) => {
+  await page.getByTestId("drawer-trigger").click();
+  const p = page.getByRole("dialog", { name: "右侧抽屉" });
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 672, y: 8, width: 420, height: 520 });
+  await expect(p).toHaveAttribute("data-mode", "docked");
+  await p.getByPlaceholder("抽屉配置").fill("drawer input");
+  await drag(page, p.locator('[data-handle="bm"]'), 0, 80);
+  expect((await box(p)).height).toBe(600);
+  await drag(page, p.locator('[data-handle="bm"]'), 0, -120);
+  expect((await box(p)).height).toBe(480);
+  await drag(page, p.locator('[data-handle="bm"]'), 0, 120);
+  expect((await box(p)).height).toBe(600);
+  await drag(page, p.locator('[data-handle="bm"]'), 0, -80);
+  await drag(page, p.locator('[data-handle="ml"]'), -70, 0);
+  await expect(p).toHaveAttribute("data-mode", "detached");
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 602, y: 8, width: 490, height: 520 });
+  await drag(page, p.locator(".draggable-popup__title"), -100, 0);
+  expect((await box(p)).x).toBeCloseTo(502, 0);
+  const detached = await box(p);
+  await p.getByRole("button", { name: "放大面板" }).click();
+  await p.getByRole("button", { name: "还原面板" }).click();
+  await expect.poll(() => box(p)).toEqual(detached);
+  await p.getByRole("button", { name: "复位位置" }).click();
+  await expect(p).toHaveAttribute("data-mode", "docked");
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 602, y: 8, width: 490, height: 520 });
+  await page.screenshot({ path: "docs/drawer.png", animations: "disabled" });
+  await p.getByRole("button", { name: "一键放大", exact: true }).click();
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 8, y: 8, width: 1084, height: 784 });
+  await page.screenshot({ path: "docs/maximized.png", animations: "disabled" });
+  await p.getByRole("button", { name: "关闭面板" }).click();
+  await page.getByTestId("drawer-trigger").click();
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 602, y: 8, width: 490, height: 520 });
+  await expect(p).toHaveAttribute("data-maximized", "false");
+  await expect(p.getByPlaceholder("抽屉配置")).toHaveValue("drawer input");
+  await page.setViewportSize({ width: 320, height: 568 });
+  await within(p, page);
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 8, y: 8, width: 304, height: 520 });
+});
+test("popup and maximized drawer stay independent and keyboard reaches maximize and restore", async ({
+  page,
+}) => {
+  await page.getByTestId("trigger-0").click();
+  const popup = panel(page);
+  await within(popup, page);
+  const r = await box(popup);
+  await page.getByTestId("drawer-trigger").click();
+  const drawer = page.getByRole("dialog", { name: "右侧抽屉" });
+  await within(drawer, page);
+  await drawer.getByRole("button", { name: "放大面板" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(drawer).toHaveAttribute("data-maximized", "true");
+  expect(await box(popup)).toEqual(r);
+  await page.keyboard.press("Space");
+  await expect(drawer).toHaveAttribute("data-maximized", "false");
+  await page.keyboard.press("Escape");
+  await expect(drawer).toHaveCount(0);
+  await expect(popup).toBeVisible();
+});
+test("Antdv Modal migration: open, slots, loading, retain content and ok/cancel", async ({
+  page,
+}) => {
+  await page.getByTestId("migration-modal-trigger").click();
+  const p = page.getByRole("dialog", { name: "Antdv Modal API" });
+  await expect(p).toBeVisible();
+  await expect.poll(async () => Math.round((await box(p)).width)).toBe(520);
+  await expect.poll(async () => Math.round((await box(p)).x)).toBe(290);
+  await expect(p.getByRole("button", { name: "扩展操作" })).toBeVisible();
+  await expect(p.getByRole("button", { name: "关闭面板" })).toHaveText("×");
+  await p
+    .getByPlaceholder("验证关闭后保留输入")
+    .fill("retained migration value");
+  await p.getByLabel("模拟提交中").check();
+  await expect(p.getByRole("button", { name: "提交配置" })).toBeDisabled();
+  await p.getByLabel("模拟提交中").uncheck();
+  await p.getByRole("button", { name: "返回", exact: true }).click();
+  await expect(p).toBeHidden();
+  await page.getByTestId("migration-modal-trigger").click();
+  await expect(p.getByPlaceholder("验证关闭后保留输入")).toHaveValue(
+    "retained migration value",
+  );
+  await p.getByRole("button", { name: "提交配置" }).click();
+  await expect(p).toBeHidden();
+  await expect(page.getByTestId("migration-events")).toContainText('"ok": 1');
+  await expect(page.getByTestId("migration-events")).toContainText(
+    '"cancel": 1',
+  );
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .not.toBe("hidden");
+});
+test("Antdv Drawer migration: title/extra/footer, string width, mask and close event", async ({
+  page,
+}) => {
+  await page.getByTestId("migration-drawer-trigger").click();
+  const p = page.getByRole("dialog", { name: "Antdv Drawer API" });
+  await expect(p).toBeVisible();
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 672, y: 8, width: 420, height: 784 });
+  await expect(p.getByText("配置操作区")).toBeVisible();
+  await expect(p.getByRole("button", { name: "关闭抽屉" })).toBeVisible();
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe(
+    "hidden",
+  );
+  await p.getByPlaceholder("Drawer 表单内容").fill("drawer value");
+  await p.getByRole("button", { name: "关闭面板" }).click();
+  await expect(p).toBeHidden();
+  await expect(page.getByTestId("migration-events")).toContainText(
+    '"close": 1',
+  );
+  await page.getByTestId("migration-drawer-trigger").click();
+  await expect(p.getByPlaceholder("Drawer 表单内容")).toHaveValue(
+    "drawer value",
+  );
+  await page
+    .locator(".draggable-popup__mask")
+    .click({ position: { x: 20, y: 400 } });
+  await expect(p).toBeHidden();
+  await expect(page.getByTestId("migration-events")).toContainText(
+    '"close": 2',
+  );
+});
+test("window action motion preserves final geometry and direct dragging remains immediate", async ({
+  page,
+}) => {
+  await page.getByTestId("trigger-0").click();
+  const p = panel(page);
+  await expect(p).not.toHaveClass(/dp-panel-enter-active/);
+  const motion = await p.evaluate((el) => {
+    (el.querySelector('[aria-label="放大面板"]') as HTMLButtonElement).click();
+    return new Promise<{ property: string; duration: string }>((resolve) =>
+      queueMicrotask(() => {
+        const css = getComputedStyle(el);
+        resolve({
+          property: css.transitionProperty,
+          duration: css.transitionDuration,
+        });
+      }),
+    );
+  });
+  expect(motion.property).toContain("width");
+  expect(motion.duration).toBe("0.2s");
+  await expect
+    .poll(() => box(p))
+    .toEqual({ x: 8, y: 8, width: 1084, height: 784 });
+  await p.getByRole("button", { name: "还原面板" }).click();
+  await expect.poll(async () => Math.round((await box(p)).width)).toBe(360);
+  const before = await box(p);
+  await drag(page, p.locator(".draggable-popup__title"), 50, 0);
+  expect((await box(p)).x - before.x).toBeCloseTo(50, 0);
+  await expect(p).not.toHaveClass(/geometry-motion/);
+});
+test("reduced motion skips geometry easing and closing still restores focus", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByTestId("migration-modal-trigger").click();
+  const p = page.getByRole("dialog", { name: "Antdv Modal API" });
+  await expect(p).toBeVisible();
+  expect(
+    await p.evaluate((el) => getComputedStyle(el).transitionDuration),
+  ).toBe("0s");
+  await p.getByRole("button", { name: "放大面板" }).click();
+  expect(await box(p)).toEqual({ x: 8, y: 8, width: 1084, height: 784 });
+  await expect(p).not.toHaveClass(/geometry-motion/);
+  await p.getByRole("button", { name: "关闭面板" }).click();
+  await expect(p).toBeHidden();
+  await expect(page.getByTestId("migration-modal-trigger")).toBeFocused();
+  expect(await page.evaluate(() => document.body.style.overflow)).not.toBe(
+    "hidden",
+  );
+});
+test("drawer height grows beyond its initial size and 800px, regrows after shrinking and clips to the viewport", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1100, height: 1100 });
+  await page.getByTestId("drawer-trigger").click();
+  const p = page.getByRole("dialog", { name: "右侧抽屉" });
+  await expect.poll(async () => (await box(p)).height).toBe(520);
+  await drag(page, p.locator('[data-handle="bm"]'), 0, 400);
+  expect((await box(p)).height).toBe(920);
+  await drag(page, p.locator('[data-handle="bm"]'), 0, -600);
+  expect((await box(p)).height).toBe(320);
+  await drag(page, p.locator('[data-handle="bm"]'), 0, 620);
+  expect((await box(p)).height).toBe(940);
+  await drag(page, p.locator('[data-handle="bm"]'), 0, 3000);
+  expect((await box(p)).height).toBe(1084);
+  await within(p, page);
+  await page.setViewportSize({ width: 1100, height: 800 });
+  await expect.poll(async () => (await box(p)).height).toBe(784);
+  await within(p, page);
 });

@@ -9,12 +9,13 @@
     "build": "vite build",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:lib": "vite build --config vite.lib.config.ts && vue-tsc -p tsconfig.lib.json && node scripts/finalize-types.mjs",
+    "check:lib": "node scripts/verify-package.mjs",
+    "pack:lib": "npm run build:lib && npm run check:lib && npm pack && node scripts/test-package.mjs"
   },
   "dependencies": {
-    "@floating-ui/vue": "^2.0.1",
-    "ant-design-vue": "^4.2.6",
-    "vue": "^3.5.44"
+    "@floating-ui/vue": "^2.0.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
@@ -29,6 +30,32 @@
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.5",
     "vitest": "^5.0.5",
-    "vue-tsc": "^3.3.13"
+    "vue-tsc": "^3.3.13",
+    "vue": "^3.5.44",
+    "ant-design-vue": "^4.2.6"
+  },
+  "description": "Vue 3 draggable, resizable popup, modal and drawer components",
+  "main": "./lib/index.cjs",
+  "module": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs"
+    },
+    "./style.css": "./lib/style.css"
+  },
+  "files": [
+    "lib",
+    "README.md",
+    "src/components/DraggablePopup/README.md",
+    "src/components/DraggablePopup/MIGRATION.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "peerDependencies": {
+    "vue": "^3.5.0"
   }
 }

@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { useAntTheme } from "./useAntTheme";
-import { DraggablePopup } from "../components/DraggablePopup";
+import {
+  DraggablePopup,
+  DraggableModal,
+  DraggableDrawer,
+} from "../components/DraggablePopup";
 import type {
   Placement,
   PopupExpose,
@@ -9,6 +13,16 @@ import type {
   ResizeHandle,
 } from "../components/DraggablePopup";
 const visible = reactive([false, false, false, false, false]);
+const migrationModalOpen = ref(false),
+  migrationDrawerOpen = ref(false),
+  migrationLoading = ref(false);
+const migrationModal = ref<PopupExpose>();
+const migrationEvents = reactive({ ok: 0, cancel: 0, close: 0 });
+const drawerOpen = ref(false),
+  drawer = ref<PopupExpose>();
+const drawerMode = ref("docked"),
+  drawerMaximized = ref(false);
+const drawerForm = reactive({ name: "", description: "" });
 useAntTheme();
 const draggable = ref(true),
   resizable = ref(true),
@@ -58,6 +72,104 @@ function popupContainer(trigger: HTMLElement) {
       <p>锚点定位 · 自由拖动 · 八方向缩放</p>
     </div>
     <section class="controls">
+      <DraggableModal
+        ref="migrationModal"
+        v-model:open="migrationModalOpen"
+        centered
+        :width="'520px'"
+        :confirm-loading="migrationLoading"
+        :body-style="{ padding: '24px' }"
+        @ok="
+          migrationEvents.ok++;
+          migrationModalOpen = false;
+        "
+        @cancel="migrationEvents.cancel++"
+      >
+        <template #trigger>
+          <a-button data-testid="migration-modal-trigger">
+            Antdv Modal 迁移示例
+          </a-button>
+        </template>
+        <template #title>Antdv Modal API</template>
+        <template #extra>
+          <a-button size="small" @click="migrationModal?.toggleMaximize()">
+            扩展操作
+          </a-button>
+        </template>
+        <template #closeIcon><span>×</span></template>
+        <a-form layout="vertical">
+          <a-form-item label="迁移表单">
+            <a-input placeholder="验证关闭后保留输入" />
+          </a-form-item>
+        </a-form>
+        <label
+          ><input v-model="migrationLoading" type="checkbox" />模拟提交中</label
+        >
+        <template #okText>提交配置</template
+        ><template #cancelText>返回</template>
+      </DraggableModal>
+      <DraggableDrawer
+        v-model:open="migrationDrawerOpen"
+        title="Antdv Drawer API"
+        placement="right"
+        width="420px"
+        @close="migrationEvents.close++"
+      >
+        <template #trigger>
+          <a-button data-testid="migration-drawer-trigger">
+            Antdv Drawer 迁移示例
+          </a-button>
+        </template>
+        <template #extra><span>配置操作区</span></template>
+        <a-input placeholder="Drawer 表单内容" />
+        <template #footer>
+          <a-button @click="migrationDrawerOpen = false"> 关闭抽屉 </a-button>
+        </template>
+      </DraggableDrawer>
+      <DraggablePopup
+        ref="drawer"
+        v-model="drawerOpen"
+        variant="drawer"
+        title="右侧抽屉"
+        :width="420"
+        :height="520"
+        :resize-handles="handles"
+        :draggable="draggable"
+        :resizable="resizable"
+        :close-on-outside-click="outside"
+        @mode-change="drawerMode = $event.mode"
+        @maximize-change="drawerMaximized = $event.maximized"
+        @open="drawerMode = 'docked'"
+      >
+        <template #trigger>
+          <a-button type="primary" data-testid="drawer-trigger">
+            打开右侧抽屉
+          </a-button>
+        </template>
+        <a-form layout="vertical">
+          <a-form-item label="抽屉名称">
+            <a-input
+              v-model:value="drawerForm.name"
+              placeholder="抽屉配置"
+            />
+</a-form-item
+          ><a-form-item label="说明">
+            <a-textarea v-model:value="drawerForm.description" :rows="4" />
+          </a-form-item>
+        </a-form>
+        <p>
+          拖动标题栏可变为自由浮窗，拖动边缘或角落可调整尺寸。标题栏支持放大、还原和复位到右侧。
+        </p>
+        <p v-for="n in 12" :key="n">{{ n }} · 抽屉内容独立滚动。</p>
+        <template #footer>
+          <a-button @click="drawer?.toggleMaximize()">
+            {{ drawerMaximized ? "还原" : "一键放大" }}
+</a-button
+          ><a-button type="primary" @click="drawerOpen = false">
+            完成
+          </a-button>
+        </template>
+      </DraggablePopup>
       <label><input v-model="showAnchor" type="checkbox" />显示锚点</label>
       <label><input v-model="draggable" type="checkbox" />拖动</label
       ><label><input v-model="resizable" type="checkbox" />缩放</label
@@ -153,6 +265,7 @@ function popupContainer(trigger: HTMLElement) {
                 @resize-start="log(i, 'resize-start', $event)"
                 @resize="rect(i, $event)"
                 @resize-end="log(i, 'resize-end', $event)"
+                @maximize-change="log(i, 'maximized', $event.maximized)"
               >
                 <template #trigger>
                   <a-button v-if="showAnchor" :data-testid="`trigger-${i}`">
@@ -204,12 +317,23 @@ function popupContainer(trigger: HTMLElement) {
     </div>
     <section class="inspector">
       <h2>状态与事件</h2>
+      <pre data-testid="migration-events">{{ migrationEvents }}</pre>
+      <pre data-testid="drawer-state">{{
+        {
+          name: "右侧抽屉",
+          visible: drawerOpen,
+          mode: drawerMode,
+          maximized: drawerMaximized,
+          rect: drawer?.getRect(),
+        }
+      }}</pre>
       <pre v-for="(name, i) in names" :key="name" data-testid="states">{{
         {
           name,
           visible: visible[i],
           mode: states[i]?.mode ?? "anchored",
           placement: states[i]?.placement ?? placement,
+          maximized: states[i]?.maximized ?? false,
           rect: panels[i]?.getRect(),
         }
       }}</pre>

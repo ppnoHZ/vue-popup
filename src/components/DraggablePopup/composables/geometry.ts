@@ -1,4 +1,4 @@
-import type { PopupRect, ResizeHandle } from "../types";
+import type { PopupRect, ResizeHandle, DrawerPlacement } from "../types";
 export interface Limits {
   minWidth: number;
   minHeight: number;
@@ -34,6 +34,58 @@ export function constrain(
     height,
     x: clamp(r.x, b.p, vw - b.p - width),
     y: clamp(r.y, b.p, vh - b.p - height),
+  };
+}
+/** Maximizing intentionally ignores normal min/max dimensions. */
+export function viewportRect(
+  padding: number,
+  vw: number,
+  vh: number,
+): PopupRect {
+  const p = clamp(padding, 0, Math.max(0, Math.min(vw, vh) / 2));
+  return {
+    x: p,
+    y: p,
+    width: Math.max(0, vw - 2 * p),
+    height: Math.max(0, vh - 2 * p),
+  };
+}
+export function dockRight(
+  r: PopupRect,
+  l: Limits,
+  vw: number,
+  vh: number,
+): PopupRect {
+  const result = constrain({ ...r, height: vh }, l, vw, vh);
+  return {
+    ...result,
+    x: vw - bounds(l, vw, vh).p - result.width,
+    y: bounds(l, vw, vh).p,
+  };
+}
+export function dockRect(
+  r: PopupRect,
+  l: Limits,
+  vw: number,
+  vh: number,
+  side: DrawerPlacement,
+  fillCrossAxis = true,
+): PopupRect {
+  const vertical = side === "left" || side === "right";
+  const result = constrain(
+      {
+        ...r,
+        ...(fillCrossAxis ? (vertical ? { height: vh } : { width: vw }) : {}),
+      },
+      l,
+      vw,
+      vh,
+    ),
+    p = bounds(l, vw, vh).p;
+  return {
+    ...result,
+    x: side === "right" ? vw - p - result.width : p,
+    y: side === "bottom" ? vh - p - result.height : p,
   };
 }
 export function resizeRect(

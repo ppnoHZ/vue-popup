@@ -35,10 +35,20 @@
   line-height: var(--ant-line-height, 1.5714285714);
   isolation: isolate;
 }
+.draggable-popup__mask {
+  position: fixed;
+  inset: 0;
+  background: var(--ant-color-bg-mask, rgb(0 0 0 / 45%));
+}
 .draggable-popup__trigger {
   display: inline-flex;
   align-items: center;
   cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 .draggable-popup__header {
   display: flex;
@@ -65,6 +75,68 @@
   font-weight: 600;
   font-size: var(--ant-font-size-lg, 16px);
   color: var(--ant-color-text-heading, rgb(0 0 0 / 88%));
+}
+.draggable-popup__extra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.draggable-popup__button {
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 4px 15px;
+  font: inherit;
+  border: 1px solid var(--ant-color-border, #d9d9d9);
+  border-radius: var(--ant-border-radius, 6px);
+  background: var(--ant-color-bg-container, #fff);
+  color: var(--ant-color-text, #000000e0);
+  cursor: pointer;
+}
+.draggable-popup__button:hover:not(:disabled) {
+  color: var(--ant-color-primary, #1677ff);
+  border-color: var(--ant-color-primary, #1677ff);
+}
+.draggable-popup__button--primary {
+  background: var(--ant-color-primary, #1677ff);
+  border-color: var(--ant-color-primary, #1677ff);
+  color: #fff;
+}
+.draggable-popup__button--primary:hover:not(:disabled) {
+  color: #fff;
+  filter: brightness(1.08);
+}
+.draggable-popup__button--danger {
+  background: var(--ant-color-error, #ff4d4f);
+  border-color: var(--ant-color-error, #ff4d4f);
+}
+.draggable-popup__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.draggable-popup__button:focus-visible {
+  outline: 2px solid var(--ant-color-primary, #1677ff);
+  outline-offset: 2px;
+}
+.draggable-popup__spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: dp-spin 0.8s linear infinite;
+}
+@keyframes dp-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .draggable-popup__header button {
   border: 0;
@@ -117,6 +189,67 @@
 }
 .draggable-popup--active {
   user-select: none;
+}
+/* Geometry eases only for explicit window actions, never pointer movement. */
+.draggable-popup--geometry-motion {
+  transition-property: left, top, width, height;
+  transition-duration: var(--dp-motion-duration, 200ms);
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+.dp-panel-enter-active,
+.dp-panel-leave-active,
+.dp-mask-enter-active,
+.dp-mask-leave-active {
+  transition-property: opacity, clip-path;
+  transition-duration: var(--dp-motion-duration, 200ms);
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+.dp-panel-enter-from,
+.dp-panel-leave-to,
+.dp-mask-enter-from,
+.dp-mask-leave-to {
+  opacity: 0;
+}
+.dp-panel-enter-to,
+.dp-panel-leave-from,
+.dp-mask-enter-to,
+.dp-mask-leave-from {
+  opacity: 1;
+}
+.draggable-popup--drawer.dp-panel-enter-active,
+.draggable-popup--drawer.dp-panel-leave-active {
+  clip-path: inset(0);
+}
+.draggable-popup--drawer[data-drawer-placement="right"].dp-panel-enter-from,
+.draggable-popup--drawer[data-drawer-placement="right"].dp-panel-leave-to {
+  clip-path: inset(0 0 0 100%);
+}
+.draggable-popup--drawer[data-drawer-placement="left"].dp-panel-enter-from,
+.draggable-popup--drawer[data-drawer-placement="left"].dp-panel-leave-to {
+  clip-path: inset(0 100% 0 0);
+}
+.draggable-popup--drawer[data-drawer-placement="top"].dp-panel-enter-from,
+.draggable-popup--drawer[data-drawer-placement="top"].dp-panel-leave-to {
+  clip-path: inset(0 0 100% 0);
+}
+.draggable-popup--drawer[data-drawer-placement="bottom"].dp-panel-enter-from,
+.draggable-popup--drawer[data-drawer-placement="bottom"].dp-panel-leave-to {
+  clip-path: inset(100% 0 0 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .draggable-popup,
+  .draggable-popup__mask,
+  .draggable-popup__header button,
+  .draggable-popup__button,
+  .draggable-popup__handle {
+    transition: none !important;
+  }
+  .draggable-popup__spinner {
+    animation: none;
+  }
+}
+.draggable-popup--maximized .draggable-popup__header {
+  cursor: default;
 }
 .draggable-popup__handle {
   position: absolute;

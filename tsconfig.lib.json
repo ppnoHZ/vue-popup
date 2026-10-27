@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "src/components/DraggablePopup",
+    "outDir": "lib/types"
+  },
+  "include": [
+    "src/components/DraggablePopup/**/*.ts",
+    "src/components/DraggablePopup/**/*.vue"
+  ],
+  "exclude": ["src/components/DraggablePopup/__tests__/**"]
+}

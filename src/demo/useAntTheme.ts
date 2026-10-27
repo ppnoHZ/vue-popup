@@ -14,6 +14,8 @@ export function useAntTheme() {
       "color-bg-layout": t.colorBgLayout,
       "color-bg-container": t.colorBgContainer,
       "color-bg-elevated": t.colorBgElevated,
+      "color-bg-mask": t.colorBgMask,
+      "color-error": t.colorError,
       "color-border": t.colorBorder,
       "color-border-secondary": t.colorBorderSecondary,
       "color-text": t.colorText,

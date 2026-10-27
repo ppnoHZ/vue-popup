@@ -24,6 +24,107 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("DraggablePopup contract", () => {
+  it("still detects removal of an anchored trigger while positioning is paused by maximize", async () => {
+    const w = mount(Popup, {
+      props: { modelValue: true },
+      slots: { trigger: "<button>Trigger</button>" },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    w.vm.maximize();
+    await nextTick();
+    w.get(".draggable-popup__trigger button").element.remove();
+    await flushPromises();
+    expect(w.emitted("update:modelValue")).toEqual([[false]]);
+    await w.setProps({ modelValue: false });
+    expect(w.emitted("close")).toEqual([[{ reason: "anchor-removed" }]]);
+    w.unmount();
+  });
+  it("maximizes once, disables interaction and restores normal geometry on close", async () => {
+    const w = mount(Popup, {
+      props: {
+        modelValue: true,
+        variant: "drawer",
+        width: 420,
+        maxWidth: 500,
+        maxHeight: 400,
+      },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    const normal = w.vm.getRect();
+    w.vm.maximize();
+    w.vm.maximize();
+    await nextTick();
+    expect(w.vm.isMaximized()).toBe(true);
+    expect(w.vm.getRect()).toEqual({
+      x: 8,
+      y: 8,
+      width: window.innerWidth - 16,
+      height: window.innerHeight - 16,
+    });
+    expect(w.emitted("maximize-change")).toHaveLength(1);
+    expect(document.querySelector("[data-handle]")).toBeNull();
+    pointer(document.querySelector("header")!, "pointerdown");
+    expect(w.emitted("drag-start")).toBeUndefined();
+    w.vm.restore();
+    w.vm.restore();
+    await nextTick();
+    expect(w.vm.getRect()).toEqual(normal);
+    expect(w.emitted("maximize-change")).toHaveLength(2);
+    w.vm.maximize();
+    await w.setProps({ modelValue: false });
+    expect(w.vm.isMaximized()).toBe(false);
+    expect(w.vm.getRect()).toEqual(normal);
+    await w.setProps({ modelValue: true });
+    expect(w.vm.getRect().width).toBe(420);
+    w.unmount();
+  });
+  it("honors disabled maximizing and restores when maximizable is switched off", async () => {
+    const w = mount(Popup, {
+      props: { modelValue: true, maximizable: false },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    w.vm.maximize();
+    expect(w.vm.isMaximized()).toBe(false);
+    expect(document.querySelector('[aria-label="放大面板"]')).toBeNull();
+    await w.setProps({ maximizable: true });
+    w.vm.toggleMaximize();
+    expect(w.vm.isMaximized()).toBe(true);
+    await w.setProps({ maximizable: false });
+    expect(w.vm.isMaximized()).toBe(false);
+    w.unmount();
+  });
+  it("supports manual drawer without a trigger, forwards panel attributes and skips anchor observers", async () => {
+    const w = mount(Popup, {
+      props: { modelValue: true, variant: "drawer", trigger: "manual" },
+      attrs: {
+        class: "custom-panel",
+        style: "--dp-bg: pink",
+        "data-testid": "custom",
+      },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    expect(document.querySelector(".draggable-popup__trigger")).toBeNull();
+    const p = document.querySelector<HTMLElement>(".draggable-popup")!;
+    expect(p.classList.contains("custom-panel")).toBe(true);
+    expect(p.style.getPropertyValue("--dp-bg")).toBe("pink");
+    expect(p.dataset.mode).toBe("docked");
+    expect(p.querySelector('[data-handle="ml"]')).not.toBeNull();
+    expect(p.dataset.testid).toBe("custom");
+    expect(dispose).not.toHaveBeenCalled();
+    await w.setProps({ variant: "popup" });
+    await flushPromises();
+    expect(p.dataset.mode).toBe("anchored");
+    w.vm.maximize();
+    await nextTick();
+    expect(dispose).toHaveBeenCalled();
+    w.vm.restore();
+    await nextTick();
+    w.unmount();
+  });
   function pointer(target: EventTarget, type: string, x = 10, y = 10) {
     const event = new MouseEvent(type, {
       bubbles: true,

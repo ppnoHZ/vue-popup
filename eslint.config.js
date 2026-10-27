@@ -20,6 +20,7 @@ export default [
   {
     ignores: [
       "dist/**",
+      "lib/**",
       "node_modules/**",
       "playwright-report/**",
       "test-results/**",

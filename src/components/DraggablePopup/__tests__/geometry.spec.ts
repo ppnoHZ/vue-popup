@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { constrain, resizeRect } from "../composables/geometry";
+import {
+  constrain,
+  resizeRect,
+  viewportRect,
+  dockRight,
+} from "../composables/geometry";
 import type { ResizeHandle } from "../types";
 const limits = {
   minWidth: 260,
@@ -9,6 +14,23 @@ const limits = {
   boundaryPadding: 8,
 };
 describe("viewport geometry", () => {
+  it("docks at the right boundary and uses available height within configured limits", () => {
+    expect(
+      dockRight({ x: 0, y: 0, width: 420, height: 300 }, limits, 1100, 800),
+    ).toEqual({ x: 672, y: 8, width: 420, height: 784 });
+    expect(
+      dockRight({ x: 0, y: 0, width: 420, height: 300 }, limits, 220, 150),
+    ).toEqual({ x: 8, y: 8, width: 204, height: 134 });
+  });
+  it("maximized geometry fills the viewport and remains nonnegative on tiny screens", () => {
+    expect(viewportRect(8, 1100, 800)).toEqual({
+      x: 8,
+      y: 8,
+      width: 1084,
+      height: 784,
+    });
+    expect(viewportRect(8, 0, 0)).toEqual({ x: 0, y: 0, width: 0, height: 0 });
+  });
   it("clamps dimensions and coordinates, including tiny viewports", () => {
     for (const [vw, vh] of [
       [1100, 800],
