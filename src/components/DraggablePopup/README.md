@@ -1,5 +1,41 @@
 # DraggablePopup
 
+## 无 Header 与自定义拖动入口
+
+`showHeader` 默认 `true`；设为 `false` 隐藏内置标题栏及其复位、放大、关闭按钮。通过内容或 footer 提供所需操作，并用 `aria-label` 或 `aria-labelledby` 为面板命名。
+
+`dragHandle?: string | HTMLElement | (() => HTMLElement | null | undefined) | false`：省略时使用 `#dragHandle` 插槽（若提供），否则使用内置 Header。显式值覆盖默认入口；`false` 关闭所有拖动入口，缩放仍可用。`draggable=false` 则统一禁用拖动。
+
+```vue
+<DraggableDrawer
+  v-model:open="open"
+  :show-header="false"
+  drag-handle="[data-drag-handle]"
+  aria-label="编辑配置"
+>
+  <div data-drag-handle class="custom-drag-handle">⠿ 拖动面板</div>
+  <a-form>...</a-form>
+  <template #footer>
+    <a-button @click="open = false">关闭</a-button>
+  </template>
+</DraggableDrawer>
+```
+
+自定义句柄请设置 `.custom-drag-handle { cursor: move; touch-action: none; }`，让触摸手势从开始即归属拖动；这些样式只应应用于句柄。选择器在当前面板内匹配，元素/函数也必须指向面板内的祖先句柄；函数在每次 pointerdown 时求值，支持动态 ref 或 v-if 节点。未匹配、返回空元素或无效选择器时不会回退到整个内容区，也不支持面板外的拖动源。
+
+独立拖动条可省略 `dragHandle` Prop，改用无参数插槽：
+
+```vue
+<DraggableDrawer v-model:open="open" :show-header="false" aria-label="编辑配置">
+  <template #dragHandle><div class="my-grip">⠿ 拖动面板</div></template>
+  <a-form>...</a-form>
+</DraggableDrawer>
+```
+
+插槽在标题栏之后、内容区之前渲染，包装层自动设置拖动光标和 `touch-action:none`，不预设高度、背景或装饰；仅在提供插槽时添加该区域。按钮、输入框、文本域、下拉框、链接、`role=button`、可编辑内容以及 `[data-no-drag]` 都排除拖动。嵌套面板拥有自己的手势；缩放手柄沿用独立入口。`drag-start/drag/drag-end`、吸附和放大规则与默认 Header 一致。
+
+Demo 的“无 Header 自定义拖动”可切换工具栏选择器、拖动条插槽、关闭入口，并测试真实 Antdv 表单和 footer 操作。
+
 **Ant Design Vue 迁移入口**：另导出 `DraggableModal`、`DraggableDrawer`，支持 `v-model:open`（兼容 visible）、`title/extra/footer/closeIcon/okText/cancelText` 等插槽。Props、事件语义、默认值与不兼容项见 [迁移指南](./MIGRATION.md)。以下原 API 同时保留。
 
 Vue 3.5 + TypeScript 通用非模态浮动面板。基础组件只依赖 Vue 和 `@floating-ui/vue`，不依赖 Ant Design Vue。复制此目录即可在其他 Vue 工程中使用；入口支持默认/具名导入，CSS 随组件导入。

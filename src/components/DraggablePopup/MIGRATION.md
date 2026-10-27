@@ -102,6 +102,8 @@ function save() {
 
 ## 明确的迁移边界
 
+`showHeader`（默认 true）、`dragHandle` 和 `#dragHandle` 是本组件的扩展接口，三个入口均支持。无 Header 场景显式使用 `showHeader=false`，指定面板内工具栏作为 `dragHandle` 或提供 `#dragHandle` 插槽；不根据 title 是否为空自动隐藏现有标题栏。隐藏后请自行提供面板的可访问名称及关闭/放大等操作，详见 README。
+
 新增的 `snapToEdge`（默认 true）和 `snapThreshold`（默认 16px）属于拖动扩展 API，三个入口一致。标题栏拖动接近视口安全边界即吸附，保持尺寸和 detached 模式；可以关闭，也不会作用于缩放或覆盖 Antdv placement。详细规则见 README。
 
 - 这是新增拖动/缩放/放大能力的浮动面板，并非 Antdv 源组件包装器；基础组件没有 Antdv 运行依赖。

@@ -1,6 +1,8 @@
 import type { Placement } from "@floating-ui/vue";
 import type { CSSProperties, VNodeChild } from "vue";
 export type PanelContent = VNodeChild | (() => VNodeChild);
+export type DragHandle =
+  string | HTMLElement | (() => HTMLElement | null | undefined) | false;
 export type DrawerPlacement = "left" | "right" | "top" | "bottom";
 export interface PanelButtonProps {
   disabled?: boolean;
@@ -74,6 +76,10 @@ export interface PopupProps {
   maxWidth?: number;
   maxHeight?: number;
   draggable?: boolean;
+  /** Hide the built-in header and its actions; provide accessible naming/actions in content. */
+  showHeader?: boolean;
+  /** Scoped to this panel. Omitted: dragHandle slot, otherwise built-in header. */
+  dragHandle?: DragHandle;
   resizable?: boolean;
   resizeHandles?: ResizeHandle[];
   keepInViewport?: boolean;

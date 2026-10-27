@@ -47,6 +47,46 @@ test.beforeEach(async ({ page }) => {
   });
   await page.goto("/");
 });
+test("headerless drawer supports custom and slot drag handles without intercepting forms or resize", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByTestId("headerless-trigger").click();
+  const p = page.getByRole("dialog", { name: "无标题栏抽屉", exact: true });
+  await expect(p.locator("header")).toHaveCount(0);
+  await p.getByLabel("无标题栏名称").fill("保留表单");
+  const initial = await box(p);
+  await drag(page, p.getByLabel("无标题栏名称"), -30, 30);
+  expect(await box(p)).toEqual(initial);
+  await drag(page, p.getByTestId("custom-drag-source"), -160, 80);
+  await expect(p).toHaveAttribute("data-mode", "detached");
+  const moved = await box(p);
+  expect(moved.x).toBeCloseTo(initial.x - 160, 0);
+  expect(moved.y).toBeCloseTo(initial.y + 80, 0);
+  await expect(p.getByLabel("无标题栏名称")).toHaveValue("保留表单");
+  await p.getByRole("button", { name: "清空输入" }).click();
+  expect(await box(p)).toEqual(moved);
+  await expect(p.getByLabel("无标题栏名称")).toHaveValue("");
+  await p.getByLabel("拖动入口").selectOption("slot");
+  await drag(page, p.getByTestId("custom-drag-source"), -40, 40);
+  expect(await box(p)).toEqual(moved);
+  await drag(page, p.getByTestId("slot-drag-source"), -70, 40);
+  const slotted = await box(p);
+  expect(slotted.x).toBeCloseTo(moved.x - 70, 0);
+  expect(slotted.y).toBeCloseTo(moved.y + 40, 0);
+  await p.getByLabel("拖动入口").selectOption("disabled");
+  await drag(page, p.getByTestId("custom-drag-source"), -40, 40);
+  expect(await box(p)).toEqual(slotted);
+  await drag(page, p.locator('[data-handle="br"]'), 50, 30);
+  expect((await box(p)).width).toBeCloseTo(slotted.width + 50, 0);
+  await p.getByRole("button", { name: "放大 / 还原" }).click();
+  await expect(p).toHaveAttribute("data-maximized", "true");
+  await p.getByRole("button", { name: "放大 / 还原" }).click();
+  await p.getByRole("button", { name: "复位位置" }).click();
+  await expect(p).toHaveAttribute("data-mode", "docked");
+  await p.getByRole("button", { name: "关闭无标题栏抽屉", exact: true }).click();
+  await expect(p).not.toBeVisible();
+});
 test.afterEach(async ({ page }) => {
   expect(errors.get(page)).toEqual([]);
 });

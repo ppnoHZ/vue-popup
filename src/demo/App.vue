@@ -23,6 +23,10 @@ const drawerOpen = ref(false),
 const drawerMode = ref("docked"),
   drawerMaximized = ref(false);
 const drawerForm = reactive({ name: "", description: "" });
+const headerlessOpen = ref(false),
+  headerlessPanel = ref<PopupExpose>(),
+  handleMode = ref("selector"),
+  headerlessName = ref("");
 useAntTheme();
 const draggable = ref(true),
   resizable = ref(true),
@@ -71,6 +75,72 @@ function popupContainer(trigger: HTMLElement) {
       <p>锚点定位 · 自由拖动 · 八方向缩放</p>
     </div>
     <section class="controls">
+      <DraggableDrawer
+        ref="headerlessPanel"
+        v-model:open="headerlessOpen"
+        :show-header="false"
+        :mask="false"
+        :width="480"
+        :height="420"
+        :drag-handle="
+          handleMode === 'disabled'
+            ? false
+            : handleMode === 'selector'
+              ? '[data-demo-drag-source]'
+              : undefined
+        "
+        aria-label="无标题栏抽屉"
+      >
+        <template #trigger>
+          <a-button data-testid="headerless-trigger"
+            >
+无 Header 自定义拖动
+</a-button
+          >
+        </template>
+        <template v-if="handleMode === 'slot'" #dragHandle>
+          <div class="demo-drag-bar" data-testid="slot-drag-source">
+            ⠿ 拖动此处移动面板
+          </div>
+        </template>
+        <div
+          data-demo-drag-source
+          :class="{ 'demo-drag-bar': handleMode === 'selector' }"
+        >
+          <span data-testid="custom-drag-source">⠿ 表单工具栏</span>
+          <a-button size="small" @click="headerlessName = ''"
+            >
+清空输入
+</a-button
+          >
+        </div>
+        <p>从指定工具栏或顶部拖动条移动；表单内容保持正常操作。</p>
+        <a-form layout="vertical">
+          <a-form-item label="名称">
+            <a-input v-model:value="headerlessName" aria-label="无标题栏名称" />
+          </a-form-item>
+          <a-form-item label="拖动入口">
+            <select v-model="handleMode" aria-label="拖动入口">
+              <option value="selector">指定工具栏</option>
+              <option value="slot">独立拖动条插槽</option>
+              <option value="disabled">关闭拖动入口</option>
+            </select>
+          </a-form-item>
+        </a-form>
+        <template #footer>
+          <a-button @click="headerlessPanel?.resetPosition()"
+            >
+复位位置
+</a-button
+          >
+          <a-button @click="headerlessPanel?.toggleMaximize()"
+            >
+放大 / 还原
+</a-button
+          >
+          <a-button aria-label="关闭无标题栏抽屉" @click="headerlessOpen = false">关闭</a-button>
+        </template>
+      </DraggableDrawer>
       <DraggableModal
         ref="migrationModal"
         v-model:open="migrationModalOpen"
@@ -350,6 +420,16 @@ function popupContainer(trigger: HTMLElement) {
   </main>
 </template>
 <style>
+.demo-drag-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  cursor: move;
+  touch-action: none;
+  background: var(--ant-color-fill-alter, #fafafa);
+  border-bottom: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+}
 body {
   margin: 0;
   background: var(--ant-color-bg-layout, #f5f5f5);

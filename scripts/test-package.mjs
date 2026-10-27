@@ -56,8 +56,8 @@ assert.ok(DraggableModal);assert.ok(DraggableDrawer);
     `import {h} from 'vue';
 import {DraggablePopup,DraggableModal,DraggableDrawer} from 'vue-draggable-popup';
 import type {PopupProps,PopupExpose,DraggableDrawerProps,DraggableModalProps} from 'vue-draggable-popup';
-const base:PopupProps={open:true,height:320};
-const drawer:DraggableDrawerProps={open:true,height:'320px',onClose:(e:MouseEvent)=>{void e.type}};
+const base:PopupProps={open:true,height:320,showHeader:false,dragHandle:'.toolbar'};
+const drawer:DraggableDrawerProps={open:true,height:'320px',showHeader:false,dragHandle:()=>document.querySelector<HTMLElement>('.toolbar'),onClose:(e:MouseEvent)=>{void e.type}};
 const modal:DraggableModalProps={open:true,confirmLoading:false,onCancel:(e:MouseEvent)=>{void e.type}};
 h(DraggablePopup,base);h(DraggableDrawer,drawer);h(DraggableModal,modal);
 function exposed(panel:PopupExpose){panel.maximize();panel.restore();return panel.getRect()}

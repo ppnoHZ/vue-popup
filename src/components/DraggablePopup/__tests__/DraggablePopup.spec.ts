@@ -24,6 +24,118 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("DraggablePopup contract", () => {
+  it("drags only from a headerless custom selector and excludes interactive descendants and nested panels", async () => {
+    const w = mount(Popup, {
+      props: {
+        modelValue: true,
+        showHeader: false,
+        dragHandle: ".toolbar",
+        motion: false,
+      },
+      attrs: { "aria-label": "Headerless panel" },
+      slots: {
+        default:
+          '<div class="toolbar"><span class="grip">Move</span><button>Action</button><input /><span data-no-drag>Text</span><div class="draggable-popup"><span class="nested">Nested</span></div></div><p class="body">Body</p>',
+      },
+      attachTo: document.body,
+    });
+    try {
+      await flushPromises();
+      const p = document.querySelector<HTMLElement>(".draggable-popup")!;
+      expect(p.querySelector("header")).toBeNull();
+      expect(p.getAttribute("aria-labelledby")).toBeNull();
+      expect(p.getAttribute("aria-label")).toBe("Headerless panel");
+      for (const selector of [
+        "button",
+        "input",
+        "[data-no-drag]",
+        ".nested",
+        ".body",
+      ]) {
+        pointer(p.querySelector(selector)!, "pointerdown");
+        pointer(window, "pointerup");
+      }
+      expect(w.emitted("drag-start")).toBeUndefined();
+      pointer(p.querySelector(".grip")!, "pointerdown");
+      pointer(window, "pointermove", 80, 90);
+      pointer(window, "pointerup", 80, 90);
+      expect(w.emitted("drag-start")).toHaveLength(1);
+      expect(w.emitted("drag-end")).toHaveLength(1);
+      await w.setProps({ dragHandle: false });
+      pointer(p.querySelector(".grip")!, "pointerdown");
+      expect(w.emitted("drag-start")).toHaveLength(1);
+      pointer(p.querySelector('[data-handle="br"]')!, "pointerdown");
+      pointer(window, "pointerup");
+      expect(w.emitted("resize-start")).toHaveLength(1);
+    } finally {
+      w.unmount();
+    }
+  });
+  it("resolves element and getter handles at pointerdown and safely ignores missing or invalid sources", async () => {
+    const w = mount(Popup, {
+      props: { modelValue: true, dragHandle: ".missing" },
+      slots: {
+        default: '<div class="one">One</div><div class="two">Two</div>',
+      },
+      attachTo: document.body,
+    });
+    try {
+      await flushPromises();
+      const p = document.querySelector<HTMLElement>(".draggable-popup")!;
+      const one = p.querySelector<HTMLElement>(".one")!,
+        two = p.querySelector<HTMLElement>(".two")!;
+      for (const source of [
+        ".missing",
+        "[",
+        false,
+        () => null,
+        document.body,
+      ] as const) {
+        await w.setProps({ dragHandle: source });
+        pointer(one, "pointerdown");
+        pointer(p.querySelector("header")!, "pointerdown");
+      }
+      expect(w.emitted("drag-start")).toBeUndefined();
+      await w.setProps({ dragHandle: one });
+      pointer(one, "pointerdown");
+      pointer(window, "pointerup");
+      let current = one;
+      await w.setProps({ dragHandle: () => current });
+      current = two;
+      pointer(one, "pointerdown");
+      expect(w.emitted("drag-start")).toHaveLength(1);
+      pointer(two, "pointerdown");
+      pointer(window, "pointercancel");
+      expect(w.emitted("drag-start")).toHaveLength(2);
+      expect(w.emitted("drag-end")).toHaveLength(2);
+    } finally {
+      w.unmount();
+    }
+  });
+  it("uses the dragHandle slot by default, with explicit source and draggable taking precedence", async () => {
+    const w = mount(Popup, {
+      props: { modelValue: true },
+      slots: { dragHandle: '<span class="slot-grip">Move</span>' },
+      attachTo: document.body,
+    });
+    try {
+      await flushPromises();
+      const p = document.querySelector<HTMLElement>(".draggable-popup")!;
+      const grip = p.querySelector(".slot-grip")!;
+      pointer(p.querySelector("header")!, "pointerdown");
+      expect(w.emitted("drag-start")).toBeUndefined();
+      pointer(grip, "pointerdown");
+      pointer(window, "pointerup");
+      expect(w.emitted("drag-start")).toHaveLength(1);
+      await w.setProps({ draggable: false });
+      pointer(grip, "pointerdown");
+      await w.setProps({ draggable: true, dragHandle: false });
+      pointer(grip, "pointerdown");
+      expect(w.emitted("drag-start")).toHaveLength(1);
+    } finally {
+      w.unmount();
+    }
+  });
   it("excludes viewport scrollbars from docking, maximize and restore bounds", async () => {
     const width = vi
       .spyOn(document.documentElement, "clientWidth", "get")

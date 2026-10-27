@@ -76,6 +76,11 @@
   font-size: var(--ant-font-size-lg, 16px);
   color: var(--ant-color-text-heading, rgb(0 0 0 / 88%));
 }
+.draggable-popup__drag-handle {
+  flex-shrink: 0;
+  cursor: move;
+  touch-action: none;
+}
 .draggable-popup__extra {
   display: flex;
   align-items: center;

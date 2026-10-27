@@ -34,8 +34,11 @@ import { resolveLength } from "./composables/length";
 import { lockBody } from "./composables/scrollLock";
 import { createFramePublisher } from "./composables/framePublisher";
 import { viewportSize } from "./composables/viewport";
+import { resolveDragHandle } from "./composables/dragHandle";
 
 const props = withDefaults(defineProps<PopupProps>(), {
+  showHeader: true,
+  dragHandle: undefined,
   modelValue: undefined,
   open: undefined,
   visible: undefined,
@@ -210,6 +213,7 @@ const effectiveHandles = computed<ResizeHandle[]>(
 const slots = defineSlots<{
   trigger(): unknown;
   header(): unknown;
+  dragHandle?(): unknown;
   default(): unknown;
   footer(): unknown;
   title(): unknown;
@@ -583,19 +587,33 @@ watch(effectiveVariant, () => {
   setMode(initialMode());
   updatePosition();
 });
-function start(e: PointerEvent, handle?: ResizeHandle) {
+function panelPointerDown(e: PointerEvent) {
+  if (
+    e.defaultPrevented ||
+    !panel.value ||
+    !(e.target instanceof Element) ||
+    e.target.closest(".draggable-popup") !== panel.value
+  )
+    return;
+  raise();
+  const source =
+    props.dragHandle ??
+    (slots.dragHandle
+      ? ".draggable-popup__drag-handle"
+      : ".draggable-popup__header");
+  const handle = resolveDragHandle(panel.value, e.target, source);
+  if (handle) start(e, undefined, handle);
+}
+function start(
+  e: PointerEvent,
+  handle?: ResizeHandle,
+  dragTarget?: HTMLElement,
+) {
   if (
     e.button !== 0 ||
     maximized.value ||
     active.value ||
     (handle ? !props.resizable : !props.draggable)
-  )
-    return;
-  if (
-    !handle &&
-    (e.target as HTMLElement).closest(
-      'button,input,textarea,select,a,[role="button"],[contenteditable], [data-no-drag]',
-    )
   )
     return;
   if (!panel.value) return;
@@ -615,7 +633,7 @@ function start(e: PointerEvent, handle?: ResizeHandle) {
     y = e.clientY,
     pointer = e.pointerId,
     kind = handle ? "resize" : "drag";
-  const captureTarget = e.currentTarget as HTMLElement;
+  const captureTarget = dragTarget ?? (e.currentTarget as HTMLElement);
   if (!handle) dragOrigin.value = { x: initial.x, y: initial.y };
   liveInteractionRect = { ...initial };
   let published = { ...initial };
@@ -789,7 +807,10 @@ defineExpose<PopupExpose>({
         ]"
         role="dialog"
         :aria-modal="mask || undefined"
-        :aria-labelledby="`${id}-title`"
+        :aria-labelledby="
+          (attrs['aria-labelledby'] as string | undefined) ??
+          (showHeader ? `${id}-title` : undefined)
+        "
         :data-mode="mode"
         :data-maximized="maximized"
         :data-drawer-placement="
@@ -815,12 +836,12 @@ defineExpose<PopupExpose>({
             zIndex: layer,
           },
         ]"
-        @pointerdown="raise"
+        @pointerdown="panelPointerDown"
       >
         <header
+          v-if="showHeader"
           class="draggable-popup__header"
           :style="headerStyle"
-          @pointerdown="start($event)"
         >
           <div :id="`${id}-title`" class="draggable-popup__title">
             <slot name="title">
@@ -888,6 +909,9 @@ defineExpose<PopupExpose>({
             </slot>
           </button>
         </header>
+        <div v-if="$slots.dragHandle" class="draggable-popup__drag-handle">
+          <slot name="dragHandle" />
+        </div>
         <div class="draggable-popup__body" :style="bodyStyle"><slot /></div>
         <footer
           v-if="

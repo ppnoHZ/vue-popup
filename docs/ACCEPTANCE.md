@@ -7,10 +7,12 @@
 | TypeScript    | npm run typecheck | 通过，无类型错误                            |
 | ESLint        | npm run lint      | 通过，无错误、无警告                        |
 | 生产构建      | npm run build     | 通过，无大文件警告                          |
-| 单元/组件测试 | npm test          | 63/63 通过，5 个测试文件                    |
-| 浏览器交互    | npm run test:e2e  | 29/29 通过 |
+| 单元/组件测试 | npm test          | 66/66 通过，5 个测试文件                    |
+| 浏览器交互    | npm run test:e2e  | 30/30 通过 |
 
 ## 逐项结果
+
+2026-10-28 无 Header 自定义拖动验收：新增 showHeader、dragHandle（选择器/HTMLElement/获取函数/false）和可选 #dragHandle 插槽，Popup/Modal/Drawer 共用。使用面板内事件委托，动态节点每次按下时解析，排除交互控件、data-no-drag 和嵌套面板。隐藏 Header 时不保留指向已移除标题的 aria-labelledby，允许业务自定义名称。单元覆盖三类来源、无效/缺失/关闭入口、插槽优先级、交互元素及嵌套隔离；Chrome Demo 回归覆盖无 Header 拖动、输入保留、句柄切换、禁用后继续缩放、放大/还原/复位/关闭。独立组件包消费同时核对新增 Props 的类型。
 
 2026-10-28 滚动条边界复验：用根元素 clientWidth/clientHeight 替代含滚动条的 innerWidth/innerHeight。共用可用视口尺寸进行拖动、缩放、吸附、居中、停靠、放大和还原；ResizeObserver 监听根元素，在滚动条动态变化时重算并在关闭/卸载时清理。新增 3 项单元用例及独立 Chrome 经典滚动条用例；后者禁用 Playwright 默认隐藏滚动条的参数，实际验证 24px 纵向与 20px 横向滚动条、触边缩放与动态显隐。原有 28 项浏览器用例回归通过。局部锚点滚动容器不改变面板默认的视口边界契约。
 
