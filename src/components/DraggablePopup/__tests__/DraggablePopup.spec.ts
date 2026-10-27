@@ -24,6 +24,45 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("DraggablePopup contract", () => {
+  it.each([
+    { snapToEdge: true, keepInViewport: true, x: 8 },
+    { snapToEdge: false, keepInViewport: true, x: 20 },
+    { snapToEdge: true, keepInViewport: false, x: 20 },
+  ])(
+    "applies drag snapping only when enabled with viewport boundaries: %o",
+    async (options) => {
+      const w = mount(Popup, {
+        props: {
+          modelValue: true,
+          snapToEdge: options.snapToEdge,
+          keepInViewport: options.keepInViewport,
+        },
+        attachTo: document.body,
+      });
+      await flushPromises();
+      const p = document.querySelector<HTMLElement>(".draggable-popup")!;
+      vi.spyOn(p, "getBoundingClientRect").mockReturnValue({
+        x: 200,
+        y: 200,
+        width: 360,
+        height: 280,
+        top: 200,
+        left: 200,
+        right: 560,
+        bottom: 480,
+        toJSON: () => ({}),
+      });
+      pointer(p.querySelector("header")!, "pointerdown", 200, 200);
+      pointer(window, "pointermove", 20, 200);
+      expect(w.vm.getRect().x).toBe(options.x);
+      pointer(window, "pointermove", 40, 200);
+      expect(w.vm.getRect().x).toBe(40);
+      pointer(window, "pointerup", 40, 200);
+      expect(w.emitted("drag-end")).toHaveLength(1);
+      expect(w.emitted("drag-end")![0]![0]).toEqual(w.vm.getRect());
+      w.unmount();
+    },
+  );
   it("still detects removal of an anchored trigger while positioning is paused by maximize", async () => {
     const w = mount(Popup, {
       props: { modelValue: true },

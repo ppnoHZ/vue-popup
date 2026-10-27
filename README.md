@@ -1,5 +1,7 @@
 # Vue DraggablePopup
 
+支持视口边缘吸附（默认 16px），可通过 `snapToEdge` / `snapThreshold` 配置；Demo 提供开关和吸附距离输入框。边缘及角落吸附不改变窗口尺寸，拖离边缘可继续自由移动。
+
 ## 组件打包与 GitHub Actions
 
 ```sh

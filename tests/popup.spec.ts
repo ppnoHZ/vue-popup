@@ -511,3 +511,59 @@ test("drawer height grows beyond its initial size and 800px, regrows after shrin
   await expect.poll(async () => (await box(p)).height).toBe(784);
   await within(p, page);
 });
+test("drag snapping covers all edges, corners and releases without position drift", async ({
+  page,
+}) => {
+  await page.getByTestId("trigger-0").click();
+  const p = panel(page);
+  await within(p, page);
+  async function moveTo(x: number, y: number) {
+    const r = await box(p);
+    await drag(page, p.locator(".draggable-popup__title"), x - r.x, y - r.y);
+  }
+  for (const [x, y, expectedX, expectedY] of [
+    [20, 200, 8, 200],
+    [720, 200, 732, 200],
+    [300, 20, 300, 8],
+    [300, 420, 300, 432],
+    [20, 20, 8, 8],
+    [200, 200, 200, 200],
+  ]) {
+    await moveTo(x!, y!);
+    const r = await box(p);
+    expect(r.x).toBeCloseTo(expectedX!, 0);
+    expect(r.y).toBeCloseTo(expectedY!, 0);
+    expect(r.width).toBe(360);
+    expect(r.height).toBe(360);
+  }
+  await expect(p).toHaveAttribute("data-mode", "detached");
+  await within(p, page);
+});
+test("snap distance and disabling snapping are configurable in the Demo", async ({
+  page,
+}) => {
+  await page.getByTestId("snap-toggle").uncheck();
+  await page.getByTestId("trigger-0").click();
+  const p = panel(page);
+  let r = await box(p);
+  await drag(page, p.locator(".draggable-popup__title"), 20 - r.x, 200 - r.y);
+  expect((await box(p)).x).toBeCloseTo(20, 0);
+  await p.getByRole("button", { name: "关闭面板" }).click();
+  await page.getByTestId("snap-distance").fill("32");
+  await page.getByTestId("snap-toggle").check();
+  await page.getByTestId("trigger-0").click();
+  r = await box(p);
+  await drag(page, p.locator(".draggable-popup__title"), 35 - r.x, 200 - r.y);
+  expect((await box(p)).x).toBeCloseTo(8, 0);
+});
+test("right drawer uses the same corner snapping without changing its size", async ({
+  page,
+}) => {
+  await page.getByTestId("drawer-trigger").click();
+  const p = page.getByRole("dialog", { name: "右侧抽屉" });
+  await expect(p).not.toHaveClass(/dp-panel-enter-active/);
+  const r = await box(p);
+  await drag(page, p.locator(".draggable-popup__title"), 20 - r.x, 20 - r.y);
+  expect(await box(p)).toEqual({ x: 8, y: 8, width: 420, height: 520 });
+  await expect(p).toHaveAttribute("data-mode", "detached");
+});

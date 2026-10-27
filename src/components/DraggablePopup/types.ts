@@ -77,6 +77,8 @@ export interface PopupProps {
   resizable?: boolean;
   resizeHandles?: ResizeHandle[];
   keepInViewport?: boolean;
+  snapToEdge?: boolean;
+  snapThreshold?: number;
   closeOnOutsideClick?: boolean;
   closeOnEsc?: boolean;
   teleportTo?: string | HTMLElement;

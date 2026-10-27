@@ -53,6 +53,8 @@ const popup = ref<PopupExpose>();
 | draggable / resizable | boolean                    | true / true                                                      |
 | resizeHandles         | ResizeHandle[]             | popup: ['br']；右侧抽屉: ['ml','tm','bm']，其他方向对应调整      |
 | keepInViewport        | boolean                    | true                                                             |
+| snapToEdge            | boolean                    | true                                                             |
+| snapThreshold         | number                     | 16px                                                             |
 | closeOnOutsideClick   | boolean                    | false                                                            |
 | closeOnEsc            | boolean                    | true                                                             |
 | teleportTo            | string 或 HTMLElement      | body                                                             |
@@ -170,6 +172,21 @@ const getPopupContainer = (trigger: HTMLElement) =>
 面板本身不裁剪 overflow，只有 body 滚动。挂载到面板而非滚动 body，可防止二级弹层被正文裁剪，且外部点击通过 composedPath 正确识别归属。对于其他 UI 库，同样需配置弹层归属。
 
 ## 样式
+
+### 视口边缘吸附
+
+三个入口默认 `snapToEdge=true`、`snapThreshold=16`（视口 CSS 像素）。拖动标题栏时，距安全边界不超过阈值即贴边，角落可同时吸附两轴；移出范围继续跟随原始指针位移，不累计吸附偏移。只移动位置，不改变尺寸或切换为 docked，也不锁定吸附后的面板。`drag`/`drag-end` 和 getRect 包含吸附后的坐标。
+
+```vue
+<DraggableDrawer
+  v-model:open="open"
+  :height="520"
+  :snap-to-edge="true"
+  :snap-threshold="24"
+/>
+```
+
+`:snap-to-edge="false"` 关闭。锚点跟随、缩放、放大和视口重裁剪不进行吸附；`keepInViewport=false` 时也不吸附。吸附位置遵循 boundaryPadding，不是屏幕外侧。两侧都在范围内时选择更近的一边；距离相同固定选择左/上，避免抖动。负数或非法阈值按 0 处理。Demo 有“边缘吸附”和“吸附距离”控制。
 
 ### 动画
 

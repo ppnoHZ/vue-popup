@@ -102,6 +102,8 @@ function save() {
 
 ## 明确的迁移边界
 
+新增的 `snapToEdge`（默认 true）和 `snapThreshold`（默认 16px）属于拖动扩展 API，三个入口一致。标题栏拖动接近视口安全边界即吸附，保持尺寸和 detached 模式；可以关闭，也不会作用于缩放或覆盖 Antdv placement。详细规则见 README。
+
 - 这是新增拖动/缩放/放大能力的浮动面板，并非 Antdv 源组件包装器；基础组件没有 Antdv 运行依赖。
 - 尚未兼容 Modal 静态方法（confirm/info/useModal 等）、按钮完整 ButtonProps、自动内容高度、ConfigProvider locale 自动读取、Drawer push/level 联动、size、autofocus 和完整焦点陷阱。开关与几何过渡使用本组件的轻量动画，不复用 Antdv 的动画私有实现。复杂 footer 可直接放原 Ant Button。
 - Mask 会锁定背景滚动，但当前不提供完整焦点陷阱；关闭后仍尽量恢复 trigger 焦点。无 trigger 时需由业务管理焦点恢复。

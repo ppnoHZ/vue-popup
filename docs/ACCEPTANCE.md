@@ -7,10 +7,12 @@
 | TypeScript    | npm run typecheck | 通过，无类型错误                            |
 | ESLint        | npm run lint      | 通过，无错误、无警告                        |
 | 生产构建      | npm run build     | 通过，无大文件警告                          |
-| 单元/组件测试 | npm test          | 37/37 通过，3 个测试文件                    |
-| 浏览器交互    | npm run test:e2e  | 17/17 通过，页面异常与 console.error 均为空 |
+| 单元/组件测试 | npm test          | 47/47 通过，3 个测试文件                    |
+| 浏览器交互    | npm run test:e2e  | 20/20 通过，页面异常与 console.error 均为空 |
 
 ## 逐项结果
+
+新增边缘吸附验收：默认 16px；四边、角落、移出范围、阈值设置、关闭吸附和 keepInViewport=false 均有单元验证；浏览器额外验证四边与角落、关闭/自定义阈值及抽屉复用。吸附后尺寸不变，mode=detached，drag-end 与实际 rect 一致。吸附仅作用于标题栏拖动。
 
 组件库另通过 `npm run pack:lib`：生成 ESM/CJS/CSS/d.ts 和 tarball，并在无 Antdv 的独立临时项目安装 tarball，验证两种模块导入及严格 TypeScript 消费。GitHub Actions 配置在 push、PR、workflow_dispatch 执行全部检查并上传组件包。
 

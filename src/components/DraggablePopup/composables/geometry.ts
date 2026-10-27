@@ -36,6 +36,40 @@ export function constrain(
     y: clamp(r.y, b.p, vh - b.p - height),
   };
 }
+/** Snap from the raw pointer-derived rectangle, never from the previous snapped
+ * rectangle, so moving away immediately releases the edge without accumulated drift. */
+export function snapRectToViewport(
+  r: PopupRect,
+  l: Limits,
+  vw: number,
+  vh: number,
+  threshold: number,
+): PopupRect {
+  const result = constrain(r, l, vw, vh),
+    p = bounds(l, vw, vh).p;
+  const distance = Number.isFinite(threshold) ? Math.max(0, threshold) : 0;
+  const right = vw - p - result.width,
+    bottom = vh - p - result.height;
+  const xLeft = result.x - p,
+    xRight = right - result.x,
+    yTop = result.y - p,
+    yBottom = bottom - result.y;
+  return {
+    ...result,
+    x:
+      Math.min(xLeft, xRight) <= distance
+        ? xLeft <= xRight
+          ? p
+          : right
+        : result.x,
+    y:
+      Math.min(yTop, yBottom) <= distance
+        ? yTop <= yBottom
+          ? p
+          : bottom
+        : result.y,
+  };
+}
 /** Maximizing intentionally ignores normal min/max dimensions. */
 export function viewportRect(
   padding: number,

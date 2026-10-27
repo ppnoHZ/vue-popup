@@ -4,6 +4,7 @@ import {
   resizeRect,
   viewportRect,
   dockRight,
+  snapRectToViewport,
 } from "../composables/geometry";
 import type { ResizeHandle } from "../types";
 const limits = {
@@ -14,6 +15,81 @@ const limits = {
   boundaryPadding: 8,
 };
 describe("viewport geometry", () => {
+  it.each([
+    [
+      { x: 20, y: 200 },
+      { x: 8, y: 200 },
+    ],
+    [
+      { x: 720, y: 200 },
+      { x: 732, y: 200 },
+    ],
+    [
+      { x: 200, y: 20 },
+      { x: 200, y: 8 },
+    ],
+    [
+      { x: 200, y: 500 },
+      { x: 200, y: 512 },
+    ],
+  ])("snaps near a viewport edge while preserving size", (input, position) => {
+    expect(
+      snapRectToViewport(
+        { ...input, width: 360, height: 280 },
+        limits,
+        1100,
+        800,
+        16,
+      ),
+    ).toEqual({ ...position, width: 360, height: 280 });
+  });
+  it("snaps both corner axes and releases as soon as raw geometry leaves the threshold", () => {
+    expect(
+      snapRectToViewport(
+        { x: 20, y: 20, width: 360, height: 280 },
+        limits,
+        1100,
+        800,
+        16,
+      ),
+    ).toEqual({ x: 8, y: 8, width: 360, height: 280 });
+    expect(
+      snapRectToViewport(
+        { x: 40, y: 40, width: 360, height: 280 },
+        limits,
+        1100,
+        800,
+        16,
+      ),
+    ).toEqual({ x: 40, y: 40, width: 360, height: 280 });
+  });
+  it("honors the configured threshold, normalizes invalid values, and picks the nearest edge", () => {
+    const r = { x: 30, y: 40, width: 360, height: 280 };
+    expect(snapRectToViewport(r, limits, 1100, 800, 16)).toEqual(r);
+    expect(snapRectToViewport(r, limits, 1100, 800, 24).x).toBe(8);
+    expect(snapRectToViewport(r, limits, 1100, 800, -1)).toEqual(r);
+    expect(snapRectToViewport(r, limits, 1100, 800, NaN)).toEqual(r);
+    expect(
+      snapRectToViewport(
+        { x: 12, y: 40, width: 280, height: 280 },
+        limits,
+        320,
+        568,
+        30,
+      ).x,
+    ).toBe(8);
+  });
+  it("keeps oversized panels inside a tiny viewport without negative dimensions", () => {
+    expect(
+      snapRectToViewport(
+        { x: 10, y: 10, width: 500, height: 500 },
+        limits,
+        100,
+        100,
+        16,
+      ),
+    ).toEqual({ x: 8, y: 8, width: 84, height: 84 });
+  });
   it("docks at the right boundary and uses available height within configured limits", () => {
     expect(
       dockRight({ x: 0, y: 0, width: 420, height: 300 }, limits, 1100, 800),

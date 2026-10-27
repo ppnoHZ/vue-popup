@@ -29,6 +29,8 @@ const draggable = ref(true),
   outside = ref(false),
   all = ref(true),
   showAnchor = ref(true);
+const snap = ref(true),
+  snapDistance = ref(16);
 const placement = ref<Placement>("bottom-start"),
   width = ref(360),
   height = ref(360);
@@ -136,6 +138,8 @@ function popupContainer(trigger: HTMLElement) {
         :resize-handles="handles"
         :draggable="draggable"
         :resizable="resizable"
+        :snap-to-edge="snap"
+        :snap-threshold="snapDistance"
         :close-on-outside-click="outside"
         @mode-change="drawerMode = $event.mode"
         @maximize-change="drawerMaximized = $event.maximized"
@@ -171,6 +175,23 @@ function popupContainer(trigger: HTMLElement) {
         </template>
       </DraggablePopup>
       <label><input v-model="showAnchor" type="checkbox" />显示锚点</label>
+      <label
+        ><input
+          v-model="snap"
+          type="checkbox"
+          data-testid="snap-toggle"
+        />边缘吸附</label
+      >
+      <label
+        >吸附距离
+        <input
+          v-model.number="snapDistance"
+          data-testid="snap-distance"
+          type="number"
+          min="0"
+          style="width: 70px"
+        />px</label
+      >
       <label><input v-model="draggable" type="checkbox" />拖动</label
       ><label><input v-model="resizable" type="checkbox" />缩放</label
       ><label
@@ -253,6 +274,8 @@ function popupContainer(trigger: HTMLElement) {
                 :height="height"
                 :draggable="draggable"
                 :resizable="resizable"
+                :snap-to-edge="snap"
+                :snap-threshold="snapDistance"
                 :close-on-outside-click="outside"
                 :resize-handles="all ? handles : ['br']"
                 @open="log(i, 'open')"

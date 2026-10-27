@@ -26,6 +26,7 @@ import {
   resizeRect,
   dockRect,
   viewportRect,
+  snapRectToViewport,
 } from "./composables/geometry";
 import "./styles.css";
 import RenderContent from "./RenderContent";
@@ -69,6 +70,8 @@ const props = withDefaults(defineProps<PopupProps>(), {
   draggable: true,
   resizable: true,
   keepInViewport: true,
+  snapToEdge: true,
+  snapThreshold: 16,
   closeOnOutsideClick: false,
   closeOnEsc: true,
   teleportTo: "body",
@@ -631,7 +634,20 @@ function start(e: PointerEvent, handle?: ResizeHandle) {
     else {
       rect.x = initial.x + event.clientX - x;
       rect.y = initial.y + event.clientY - y;
-      if (props.keepInViewport) clip();
+      if (props.keepInViewport) {
+        if (props.snapToEdge)
+          Object.assign(
+            rect,
+            snapRectToViewport(
+              rect,
+              limits.value,
+              window.innerWidth,
+              window.innerHeight,
+              props.snapThreshold,
+            ),
+          );
+        else clip();
+      }
     }
     if (kind === "drag") emit("drag", getRect());
     else emit("resize", getRect());
