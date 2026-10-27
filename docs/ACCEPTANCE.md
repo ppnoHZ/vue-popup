@@ -7,10 +7,12 @@
 | TypeScript    | npm run typecheck | 通过，无类型错误                            |
 | ESLint        | npm run lint      | 通过，无错误、无警告                        |
 | 生产构建      | npm run build     | 通过，无大文件警告                          |
-| 单元/组件测试 | npm test          | 60/60 通过，4 个测试文件                    |
-| 浏览器交互    | npm run test:e2e  | 28/28 通过，页面异常与 console.error 均为空 |
+| 单元/组件测试 | npm test          | 63/63 通过，5 个测试文件                    |
+| 浏览器交互    | npm run test:e2e  | 29/29 通过 |
 
 ## 逐项结果
+
+2026-10-28 滚动条边界复验：用根元素 clientWidth/clientHeight 替代含滚动条的 innerWidth/innerHeight。共用可用视口尺寸进行拖动、缩放、吸附、居中、停靠、放大和还原；ResizeObserver 监听根元素，在滚动条动态变化时重算并在关闭/卸载时清理。新增 3 项单元用例及独立 Chrome 经典滚动条用例；后者禁用 Playwright 默认隐藏滚动条的参数，实际验证 24px 纵向与 20px 横向滚动条、触边缩放与动态显隐。原有 28 项浏览器用例回归通过。局部锚点滚动容器不改变面板默认的视口边界契约。
 
 2026-10-28 性能优化复验：逐指针样本计算约束，每动画帧合并视觉更新与移动事件；结束/取消同步刷新最终几何。拖动期间使用临时 translate3d，结束恢复 left/top 并清理 transform。Demo 诊断以 100ms 采样。新增 7 项单元测试和 2 项 Chrome 回归，覆盖高频合并、约束反向、取消清理与最终坐标。AC01–AC18 及原有吸附/放大/动画回归全部通过，typecheck/lint/build/pack:lib 均通过。方法、原始数据及性能限制见 [性能报告](./performance/README.md)。
 

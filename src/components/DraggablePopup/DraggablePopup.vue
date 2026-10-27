@@ -33,6 +33,7 @@ import RenderContent from "./RenderContent";
 import { resolveLength } from "./composables/length";
 import { lockBody } from "./composables/scrollLock";
 import { createFramePublisher } from "./composables/framePublisher";
+import { viewportSize } from "./composables/viewport";
 
 const props = withDefaults(defineProps<PopupProps>(), {
   modelValue: undefined,
@@ -249,6 +250,7 @@ let reason: CloseReason = "programmatic",
   observer: MutationObserver | undefined;
 let stopInteraction: (() => void) | undefined,
   epoch = 0;
+let viewportObserver: ResizeObserver | undefined;
 const reference = computed(() =>
   isOpen.value && mode.value === "anchored" && !maximized.value
     ? anchor.value
@@ -273,21 +275,19 @@ function setMode(value: PopupMode) {
   }
 }
 function clip() {
+  const viewport = viewportSize();
   Object.assign(
     rect,
-    constrain(rect, limits.value, window.innerWidth, window.innerHeight),
+    constrain(rect, limits.value, viewport.width, viewport.height),
   );
 }
 function updatePosition() {
   if (!isOpen.value) return;
+  const viewport = viewportSize();
   if (maximized.value) {
     Object.assign(
       rect,
-      viewportRect(
-        props.boundaryPadding,
-        window.innerWidth,
-        window.innerHeight,
-      ),
+      viewportRect(props.boundaryPadding, viewport.width, viewport.height),
     );
   } else if (mode.value === "docked") {
     Object.assign(
@@ -295,8 +295,8 @@ function updatePosition() {
       dockRect(
         rect,
         limits.value,
-        window.innerWidth,
-        window.innerHeight,
+        viewport.width,
+        viewport.height,
         side.value,
         side.value === "left" || side.value === "right"
           ? props.height === undefined
@@ -305,10 +305,10 @@ function updatePosition() {
     );
   } else if (mode.value === "centered") {
     clip();
-    rect.x = (window.innerWidth - rect.width) / 2;
+    rect.x = (viewport.width - rect.width) / 2;
     rect.y = props.centered
-      ? (window.innerHeight - rect.height) / 2
-      : Math.min(100, window.innerHeight - props.boundaryPadding - rect.height);
+      ? (viewport.height - rect.height) / 2
+      : Math.min(100, viewport.height - props.boundaryPadding - rect.height);
     clip();
   } else if (mode.value === "anchored") {
     clip();
@@ -423,6 +423,8 @@ function escape(e: KeyboardEvent) {
   }
 }
 function cleanup() {
+  viewportObserver?.disconnect();
+  viewportObserver = undefined;
   stopPosition?.();
   stopPosition = undefined;
   observer?.disconnect();
@@ -497,6 +499,18 @@ watch(
     updatePosition();
     window.addEventListener("resize", onViewportResize);
     window.visualViewport?.addEventListener("resize", onViewportResize);
+    // Scrollbars can appear/disappear without a window resize (including body locks).
+    if (typeof ResizeObserver !== "undefined") {
+      let previous = viewportSize();
+      viewportObserver = new ResizeObserver(() => {
+        const next = viewportSize();
+        if (next.width !== previous.width || next.height !== previous.height) {
+          previous = next;
+          onViewportResize();
+        }
+      });
+      viewportObserver.observe(document.documentElement);
+    }
     document.addEventListener("pointerdown", outside, true);
     document.addEventListener("keydown", escape);
     if (!motionEnabled.value) afterEnter();
@@ -637,6 +651,7 @@ function start(e: PointerEvent, handle?: ResizeHandle) {
   else emit("drag-start", getRect());
   const move = (event: PointerEvent) => {
     if (event.pointerId !== pointer) return;
+    const viewport = props.keepInViewport ? viewportSize() : undefined;
     let next: PopupRect;
     if (handle) {
       next = resizeRect(
@@ -645,8 +660,8 @@ function start(e: PointerEvent, handle?: ResizeHandle) {
         event.clientX - resizeX,
         event.clientY - resizeY,
         limits.value,
-        props.keepInViewport ? window.innerWidth : Number.MAX_SAFE_INTEGER,
-        props.keepInViewport ? window.innerHeight : Number.MAX_SAFE_INTEGER,
+        viewport?.width ?? Number.MAX_SAFE_INTEGER,
+        viewport?.height ?? Number.MAX_SAFE_INTEGER,
       );
       resizeBase = next;
       resizeX = event.clientX;
@@ -657,22 +672,17 @@ function start(e: PointerEvent, handle?: ResizeHandle) {
         x: initial.x + event.clientX - x,
         y: initial.y + event.clientY - y,
       };
-      if (props.keepInViewport) {
+      if (viewport) {
         if (props.snapToEdge)
           next = snapRectToViewport(
             next,
             limits.value,
-            window.innerWidth,
-            window.innerHeight,
+            viewport.width,
+            viewport.height,
             props.snapThreshold,
           );
         else
-          next = constrain(
-            next,
-            limits.value,
-            window.innerWidth,
-            window.innerHeight,
-          );
+          next = constrain(next, limits.value, viewport.width, viewport.height);
       }
     }
     liveInteractionRect = next;

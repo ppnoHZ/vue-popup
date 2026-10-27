@@ -24,6 +24,34 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("DraggablePopup contract", () => {
+  it("excludes viewport scrollbars from docking, maximize and restore bounds", async () => {
+    const width = vi
+      .spyOn(document.documentElement, "clientWidth", "get")
+      .mockReturnValue(980);
+    const height = vi
+      .spyOn(document.documentElement, "clientHeight", "get")
+      .mockReturnValue(720);
+    const w = mount(Popup, {
+      props: { modelValue: true, variant: "drawer", motion: false },
+      attachTo: document.body,
+    });
+    try {
+      await flushPromises();
+      let r = w.vm.getRect();
+      expect(r.x + r.width).toBe(972);
+      expect(r.y + r.height).toBe(712);
+      w.vm.maximize();
+      expect(w.vm.getRect()).toEqual({ x: 8, y: 8, width: 964, height: 704 });
+      w.vm.restore();
+      r = w.vm.getRect();
+      expect(r.x + r.width).toBe(972);
+      expect(r.y + r.height).toBe(712);
+    } finally {
+      w.unmount();
+      width.mockRestore();
+      height.mockRestore();
+    }
+  });
   it("coalesces resize output, preserves every clamp reversal and flushes on pointerup", async () => {
     const pending = new Map<number, () => void>();
     let sequence = 0;

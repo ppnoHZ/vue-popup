@@ -146,6 +146,7 @@ interface PopupRect {
 
 - `position:fixed` 维护视口 CSS 坐标。Floating UI 保持 `transform:false`，使用 offset、flip、shift。拖动期间由组件暂时使用 translate3d 减少布局开销，结束时移除并写回最终 left/top；缩放仍直接更新尺寸。拖动期间面板内 fixed 后代遵循 transform 包含块规则，二级弹层推荐 Teleport 到 body。
 - 每个指针样本都计算约束和反向缩放，但视觉更新与 drag/resize 事件最多每动画帧发布一次，几何未变化时不重复发布。结束或取消时同步刷新最后一个样本，再发布 end 事件；getRect() 可在下一次渲染前读取最新逻辑几何。Demo 诊断区按 100ms 采样，避免诊断文本拖慢表单交互。性能复测方法与原始数据见 [性能报告](../../../docs/performance/README.md)。
+- 边界按 `document.documentElement.clientWidth/clientHeight` 计算，扣除页面纵向/横向滚动条实际占用的宽高；覆盖式滚动条不额外扣减。拖动、缩放、吸附、居中、停靠、放大共用此边界，并监听根元素尺寸变化以响应滚动条出现/消失。默认 Teleport 到 body，锚点祖先的局部滚动条不从页面视口重复扣减；getContainer/teleportTo 仅更改挂载位置，不定义容器内边界。
 - 非放大的 anchored 时运行 `autoUpdate`，监听滚动、尺寸和布局变化；`animationFrame:true` 额外支持 transform 移动的锚点。关闭、卸载、detached、docked 或放大时释放定位监听；锚点移除观察仅在 anchored 保留（包括放大期间）。
 - 独立的窗口 resize 回调不与 autoUpdate 共用引用，避免其清理时误移除自由模式的视口约束监听；视口改变会先结束正在进行的交互，再更新几何。
 - 第一次开始交互时采样真实 `getBoundingClientRect()`，再切换 detached。自由浮窗不再被锚点重算覆盖。
