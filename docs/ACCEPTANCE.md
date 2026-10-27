@@ -7,10 +7,12 @@
 | TypeScript    | npm run typecheck | 通过，无类型错误                            |
 | ESLint        | npm run lint      | 通过，无错误、无警告                        |
 | 生产构建      | npm run build     | 通过，无大文件警告                          |
-| 单元/组件测试 | npm test          | 53/53 通过，3 个测试文件                    |
-| 浏览器交互    | npm run test:e2e  | 26/26 通过，页面异常与 console.error 均为空 |
+| 单元/组件测试 | npm test          | 60/60 通过，4 个测试文件                    |
+| 浏览器交互    | npm run test:e2e  | 28/28 通过，页面异常与 console.error 均为空 |
 
 ## 逐项结果
+
+2026-10-28 性能优化复验：逐指针样本计算约束，每动画帧合并视觉更新与移动事件；结束/取消同步刷新最终几何。拖动期间使用临时 translate3d，结束恢复 left/top 并清理 transform。Demo 诊断以 100ms 采样。新增 7 项单元测试和 2 项 Chrome 回归，覆盖高频合并、约束反向、取消清理与最终坐标。AC01–AC18 及原有吸附/放大/动画回归全部通过，typecheck/lint/build/pack:lib 均通过。方法、原始数据及性能限制见 [性能报告](./performance/README.md)。
 
 2026-10-28 普通面板缩放复验：Popup/Modal 默认上限统一为视口，显式业务上限仍有效。默认启用 8 个手柄，侧边热区覆盖整条边；新增非中点抓取、Popup 全视口宽度、1600px 视口 Modal 全宽、动画中真实矩形采样的回归。Demo 原先 30 次缩放采样触发父级与全部表单重渲染 32 次；隔离 PanelDiagnostics.vue 并移除逐帧日志拼接后实测降为 2 次。新增浏览器性能回归要求 30 次采样父级更新不超过 4 次，并核对输入内容保留。原有显式限制与触限反向响应继续通过。
 

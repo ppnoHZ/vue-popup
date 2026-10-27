@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "bench:interaction": "node scripts/benchmark-interactions.mjs",
     "build:lib": "vite build --config vite.lib.config.ts && vue-tsc -p tsconfig.lib.json && node scripts/finalize-types.mjs",
     "check:lib": "node scripts/verify-package.mjs",
     "pack:lib": "npm run build:lib && npm run check:lib && npm pack && node scripts/test-package.mjs"

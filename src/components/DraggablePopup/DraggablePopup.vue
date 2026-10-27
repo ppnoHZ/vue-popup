@@ -32,6 +32,7 @@ import "./styles.css";
 import RenderContent from "./RenderContent";
 import { resolveLength } from "./composables/length";
 import { lockBody } from "./composables/scrollLock";
+import { createFramePublisher } from "./composables/framePublisher";
 
 const props = withDefaults(defineProps<PopupProps>(), {
   modelValue: undefined,
@@ -235,6 +236,8 @@ const mode = ref<PopupMode>(initialMode()),
   layer = ref(props.zIndex);
 const maximized = ref(false);
 let restoreRect: PopupRect | undefined;
+let liveInteractionRect: PopupRect | undefined;
+const dragOrigin = ref<{ x: number; y: number }>();
 const rect = reactive<PopupRect>({
   x: 0,
   y: 0,
@@ -517,7 +520,7 @@ function resetSize() {
   updatePosition();
 }
 function getRect() {
-  return { ...rect };
+  return { ...(liveInteractionRect ?? rect) };
 }
 watch(side, () => {
   if (mode.value !== "docked") return;
@@ -599,6 +602,30 @@ function start(e: PointerEvent, handle?: ResizeHandle) {
     pointer = e.pointerId,
     kind = handle ? "resize" : "drag";
   const captureTarget = e.currentTarget as HTMLElement;
+  if (!handle) dragOrigin.value = { x: initial.x, y: initial.y };
+  liveInteractionRect = { ...initial };
+  let published = { ...initial };
+  const frames = createFramePublisher<PopupRect>(
+    (next) => {
+      if (
+        next.x === published.x &&
+        next.y === published.y &&
+        next.width === published.width &&
+        next.height === published.height
+      )
+        return;
+      Object.assign(rect, next);
+      published = { ...next };
+      if (kind === "drag") emit("drag", { ...next });
+      else emit("resize", { ...next });
+    },
+    typeof window.requestAnimationFrame === "function"
+      ? {
+          request: (callback) => window.requestAnimationFrame(callback),
+          cancel: (id) => window.cancelAnimationFrame(id),
+        }
+      : undefined,
+  );
   // Rebase resizing at every pointer sample after constraints are applied.
   // Discard overshoot instead of storing a dead zone beyond min/max or viewport edges.
   let resizeBase = { ...initial },
@@ -610,47 +637,55 @@ function start(e: PointerEvent, handle?: ResizeHandle) {
   else emit("drag-start", getRect());
   const move = (event: PointerEvent) => {
     if (event.pointerId !== pointer) return;
+    let next: PopupRect;
     if (handle) {
-      Object.assign(
-        rect,
-        resizeRect(
-          resizeBase,
-          handle,
-          event.clientX - resizeX,
-          event.clientY - resizeY,
-          limits.value,
-          props.keepInViewport ? window.innerWidth : Number.MAX_SAFE_INTEGER,
-          props.keepInViewport ? window.innerHeight : Number.MAX_SAFE_INTEGER,
-        ),
+      next = resizeRect(
+        resizeBase,
+        handle,
+        event.clientX - resizeX,
+        event.clientY - resizeY,
+        limits.value,
+        props.keepInViewport ? window.innerWidth : Number.MAX_SAFE_INTEGER,
+        props.keepInViewport ? window.innerHeight : Number.MAX_SAFE_INTEGER,
       );
-      resizeBase = getRect();
+      resizeBase = next;
       resizeX = event.clientX;
       resizeY = event.clientY;
     } else {
-      rect.x = initial.x + event.clientX - x;
-      rect.y = initial.y + event.clientY - y;
+      next = {
+        ...initial,
+        x: initial.x + event.clientX - x,
+        y: initial.y + event.clientY - y,
+      };
       if (props.keepInViewport) {
         if (props.snapToEdge)
-          Object.assign(
-            rect,
-            snapRectToViewport(
-              rect,
-              limits.value,
-              window.innerWidth,
-              window.innerHeight,
-              props.snapThreshold,
-            ),
+          next = snapRectToViewport(
+            next,
+            limits.value,
+            window.innerWidth,
+            window.innerHeight,
+            props.snapThreshold,
           );
-        else clip();
+        else
+          next = constrain(
+            next,
+            limits.value,
+            window.innerWidth,
+            window.innerHeight,
+          );
       }
     }
-    if (kind === "drag") emit("drag", getRect());
-    else emit("resize", getRect());
+    liveInteractionRect = next;
+    frames.queue(next);
   };
   const finish = (event?: PointerEvent) => {
     if (event && event.pointerId !== pointer) return;
     if (!active.value) return;
     active.value = false;
+    frames.flush();
+    frames.cancel();
+    liveInteractionRect = undefined;
+    dragOrigin.value = undefined;
     window.removeEventListener("pointermove", move);
     window.removeEventListener("pointerup", finish);
     window.removeEventListener("pointercancel", finish);
@@ -739,6 +774,7 @@ defineExpose<PopupExpose>({
             'draggable-popup--maximized': maximized,
             'draggable-popup--drawer': effectiveVariant === 'drawer',
             'draggable-popup--geometry-motion': geometryMotion,
+            'draggable-popup--dragging': !!dragOrigin,
           },
         ]"
         role="dialog"
@@ -757,8 +793,13 @@ defineExpose<PopupExpose>({
           drawerStyle,
           {
             '--dp-motion-duration': `${Math.max(0, motionDuration)}ms`,
-            left: `${rect.x}px`,
-            top: `${rect.y}px`,
+            left: `${dragOrigin?.x ?? rect.x}px`,
+            top: `${dragOrigin?.y ?? rect.y}px`,
+            ...(dragOrigin
+              ? {
+                  transform: `translate3d(${rect.x - dragOrigin.x}px,${rect.y - dragOrigin.y}px,0)`,
+                }
+              : {}),
             width: `${rect.width}px`,
             height: `${rect.height}px`,
             zIndex: layer,

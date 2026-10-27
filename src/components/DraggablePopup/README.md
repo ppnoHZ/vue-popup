@@ -144,7 +144,8 @@ interface PopupRect {
 
 ## 坐标与生命周期
 
-- `position:fixed` 和唯一的 left/top/width/height 写入者维护视口 CSS 坐标。Floating UI `transform:false`，使用 offset、flip、shift，尺寸由独立几何函数约束，避免两套 transform 叠加。
+- `position:fixed` 维护视口 CSS 坐标。Floating UI 保持 `transform:false`，使用 offset、flip、shift。拖动期间由组件暂时使用 translate3d 减少布局开销，结束时移除并写回最终 left/top；缩放仍直接更新尺寸。拖动期间面板内 fixed 后代遵循 transform 包含块规则，二级弹层推荐 Teleport 到 body。
+- 每个指针样本都计算约束和反向缩放，但视觉更新与 drag/resize 事件最多每动画帧发布一次，几何未变化时不重复发布。结束或取消时同步刷新最后一个样本，再发布 end 事件；getRect() 可在下一次渲染前读取最新逻辑几何。Demo 诊断区按 100ms 采样，避免诊断文本拖慢表单交互。性能复测方法与原始数据见 [性能报告](../../../docs/performance/README.md)。
 - 非放大的 anchored 时运行 `autoUpdate`，监听滚动、尺寸和布局变化；`animationFrame:true` 额外支持 transform 移动的锚点。关闭、卸载、detached、docked 或放大时释放定位监听；锚点移除观察仅在 anchored 保留（包括放大期间）。
 - 独立的窗口 resize 回调不与 autoUpdate 共用引用，避免其清理时误移除自由模式的视口约束监听；视口改变会先结束正在进行的交互，再更新几何。
 - 第一次开始交互时采样真实 `getBoundingClientRect()`，再切换 detached。自由浮窗不再被锚点重算覆盖。

@@ -10,7 +10,6 @@ import {
 import type {
   Placement,
   PopupExpose,
-  PopupRect,
   ResizeHandle,
 } from "../components/DraggablePopup";
 const visible = reactive([false, false, false, false, false]);
@@ -59,11 +58,6 @@ function log(i: number, name: string, value?: unknown) {
   states[i] = { ...states[i], [name]: value };
   logs.value.unshift(`${i + 1} ${name} ${value ? JSON.stringify(value) : ""}`);
   logs.value = logs.value.slice(0, 30);
-}
-function rect(i: number, value: PopupRect) {
-  // Live geometry belongs to the diagnostics child. Rebuilding event strings and
-  // the parent form/Select trees on every pointer sample makes resizing stutter.
-  states[i] = { ...states[i], rect: value };
 }
 function popupContainer(trigger: HTMLElement) {
   return (trigger.closest(".draggable-popup") as HTMLElement) || document.body;
@@ -286,10 +280,8 @@ function popupContainer(trigger: HTMLElement) {
                 @mode-change="log(i, 'mode', $event.mode)"
                 @placement-change="log(i, 'placement', $event.placement)"
                 @drag-start="log(i, 'drag-start', $event)"
-                @drag="rect(i, $event)"
                 @drag-end="log(i, 'drag-end', $event)"
                 @resize-start="log(i, 'resize-start', $event)"
-                @resize="rect(i, $event)"
                 @resize-end="log(i, 'resize-end', $event)"
                 @maximize-change="log(i, 'maximized', $event.maximized)"
               >

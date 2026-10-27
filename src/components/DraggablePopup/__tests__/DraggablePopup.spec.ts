@@ -24,6 +24,99 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("DraggablePopup contract", () => {
+  it("coalesces resize output, preserves every clamp reversal and flushes on pointerup", async () => {
+    const pending = new Map<number, () => void>();
+    let sequence = 0;
+    const cancel = vi.fn((id: number) => pending.delete(id));
+    vi.stubGlobal("requestAnimationFrame", (callback: () => void) => {
+      pending.set(++sequence, callback);
+      return sequence;
+    });
+    vi.stubGlobal("cancelAnimationFrame", cancel);
+    const w = mount(Popup, {
+      props: { modelValue: true, maxWidth: 500 },
+      attachTo: document.body,
+    });
+    try {
+      await flushPromises();
+      const p = document.querySelector<HTMLElement>(".draggable-popup")!;
+      vi.spyOn(p, "getBoundingClientRect").mockReturnValue({
+        x: 200,
+        y: 200,
+        width: 360,
+        height: 280,
+        top: 200,
+        left: 200,
+        right: 560,
+        bottom: 480,
+        toJSON: () => ({}),
+      });
+      pointer(p.querySelector('[data-handle="mr"]')!, "pointerdown", 560, 300);
+      pointer(window, "pointermove", 1000, 300);
+      pointer(window, "pointermove", 990, 300);
+      expect(w.vm.getRect().width).toBe(490);
+      expect(w.emitted("resize")).toBeUndefined();
+      expect(pending.size).toBe(1);
+      pointer(window, "pointerup", 990, 300);
+      expect(w.emitted("resize")).toEqual([
+        [{ x: 200, y: 200, width: 490, height: 280 }],
+      ]);
+      expect(w.emitted("resize-end")).toHaveLength(1);
+      expect(pending.size).toBe(0);
+      expect(cancel).toHaveBeenCalled();
+    } finally {
+      w.unmount();
+      vi.unstubAllGlobals();
+    }
+  });
+  it("does not publish duplicate geometry at an already reached limit", async () => {
+    const pending = new Map<number, () => void>();
+    let sequence = 0;
+    vi.stubGlobal("requestAnimationFrame", (callback: () => void) => {
+      pending.set(++sequence, callback);
+      return sequence;
+    });
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => pending.delete(id));
+    const tick = () => {
+      const callbacks = [...pending.values()];
+      pending.clear();
+      callbacks.forEach((fn) => fn());
+    };
+    const w = mount(Popup, {
+      props: { modelValue: true, maxWidth: 500 },
+      attachTo: document.body,
+    });
+    try {
+      await flushPromises();
+      const p = document.querySelector<HTMLElement>(".draggable-popup")!;
+      vi.spyOn(p, "getBoundingClientRect").mockReturnValue({
+        x: 200,
+        y: 200,
+        width: 360,
+        height: 280,
+        top: 200,
+        left: 200,
+        right: 560,
+        bottom: 480,
+        toJSON: () => ({}),
+      });
+      pointer(p.querySelector('[data-handle="mr"]')!, "pointerdown", 560, 300);
+      pointer(window, "pointermove", 1000, 300);
+      tick();
+      pointer(window, "pointermove", 2000, 300);
+      tick();
+      expect(w.emitted("resize")).toHaveLength(1);
+      pointer(window, "pointermove", 1990, 300);
+      expect(w.vm.getRect().width).toBe(490);
+      pointer(window, "pointercancel", 1990, 300);
+      expect(w.emitted("resize")).toHaveLength(2);
+      expect(w.emitted("resize-end")).toHaveLength(1);
+      expect(pending.size).toBe(0);
+    } finally {
+      w.unmount();
+      vi.unstubAllGlobals();
+    }
+  });
   it("resizes from a sampled in-flight ordinary panel geometry without jumping to legacy maxWidth", async () => {
     const w = mount(Popup, {
       props: { modelValue: true },

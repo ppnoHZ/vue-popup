@@ -190,6 +190,9 @@
 .draggable-popup--active {
   user-select: none;
 }
+.draggable-popup--dragging {
+  will-change: transform;
+}
 /* Geometry eases only for explicit window actions, never pointer movement. */
 .draggable-popup--geometry-motion {
   transition-property: left, top, width, height;

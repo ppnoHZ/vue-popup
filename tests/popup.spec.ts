@@ -1,4 +1,5 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
+import type { PopupRect } from "../src/components/DraggablePopup";
 const errors = new WeakMap<Page, string[]>();
 async function box(el: Locator) {
   return el.evaluate((e) => {
@@ -692,4 +693,112 @@ test("resizing does not repeatedly rerender the Demo parent and all of its forms
     "keep editing",
   );
   expect((await box(p)).width).toBe(520);
+});
+test("high frequency resize samples publish at most once per frame and flush the exact final rectangle", async ({
+  page,
+}) => {
+  await page.getByTestId("trigger-0").click();
+  const p = panel(page);
+  await expect(p).not.toHaveClass(/dp-panel-enter-active/);
+  const result = await p.evaluate(async (el) => {
+    type Owner = {
+      type: { __name?: string };
+      parent?: Owner;
+      vnode: { props: Record<string, unknown> };
+      exposed: { getRect(): PopupRect };
+    };
+    const handle = el.querySelector('[data-handle="br"]')!,
+      b = handle.getBoundingClientRect(),
+      x = b.x + b.width / 2,
+      y = b.y + b.height / 2;
+    handle.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        pointerId: 91,
+        clientX: x,
+        clientY: y,
+      }),
+    );
+    await Promise.resolve();
+    let owner = (el as HTMLElement & { __vueParentComponent: Owner })
+      .__vueParentComponent;
+    while (owner.type.__name !== "DraggablePopup") {
+      if (!owner.parent) throw new Error("missing panel owner");
+      owner = owner.parent;
+    }
+    let moves = 0,
+      ends = 0,
+      last: PopupRect | undefined,
+      end: PopupRect | undefined;
+    const props = owner.vnode.props,
+      oldMove = props.onResize,
+      oldEnd = props.onResizeEnd;
+    props.onResize = (rect: PopupRect) => {
+      moves++;
+      last = rect;
+      if (typeof oldMove === "function") oldMove(rect);
+    };
+    props.onResizeEnd = (rect: PopupRect) => {
+      ends++;
+      end = rect;
+      if (typeof oldEnd === "function") oldEnd(rect);
+    };
+    for (let frame = 0; frame < 3; frame++) {
+      await new Promise(requestAnimationFrame);
+      for (let sample = 1; sample <= 20; sample++) {
+        const n = frame * 20 + sample;
+        window.dispatchEvent(
+          new PointerEvent("pointermove", {
+            pointerId: 91,
+            clientX: x + n * 2,
+            clientY: y + n,
+          }),
+        );
+        await Promise.resolve();
+      }
+    }
+    const latest = owner.exposed.getRect();
+    window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 91 }));
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
+    return { moves, ends, last, end, latest };
+  });
+  expect(result.moves).toBeGreaterThan(0);
+  expect(result.moves).toBeLessThanOrEqual(4);
+  expect(result.ends).toBe(1);
+  expect(result.latest.width).toBe(480);
+  expect(result.latest.height).toBe(420);
+  expect(result.end).toEqual(result.latest);
+  expect(result.last).toEqual(result.latest);
+  expect(await box(p)).toEqual(result.latest);
+});
+test("compositor dragging preserves viewport coordinates and removes its transient transform on finish", async ({
+  page,
+}) => {
+  await page.getByTestId("trigger-0").click();
+  const p = panel(page);
+  await expect(p).not.toHaveClass(/dp-panel-enter-active/);
+  const before = await box(p),
+    title = p.locator(".draggable-popup__title");
+  await title.hover();
+  const b = await title.boundingBox();
+  await page.mouse.move(b!.x + 20, b!.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(b!.x + 140, b!.y + 100, { steps: 20 });
+  await expect
+    .poll(async () => (await box(p)).x)
+    .toBeCloseTo(before.x + 120, 0);
+  expect(await p.evaluate((el) => (el as HTMLElement).style.left)).toBe(
+    `${before.x}px`,
+  );
+  expect(
+    await p.evaluate((el) => (el as HTMLElement).style.transform),
+  ).toContain("translate3d");
+  const live = await box(p);
+  await page.mouse.up();
+  await expect(p).toHaveCSS("transform", "none");
+  await expect(p).not.toHaveClass(/--dragging/);
+  expect(await box(p)).toEqual(live);
 });
