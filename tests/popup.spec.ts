@@ -1,6 +1,31 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import type { PopupRect } from "../src/components/DraggablePopup";
 const errors = new WeakMap<Page, string[]>();
+test("resize separator highlights only on hover or interaction and releases global cursor", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByTestId("trigger-0").click();
+  const p = panel(page),
+    handle = p.locator('[data-handle="mr"]');
+  const opacity = () =>
+    handle.evaluate((el) => getComputedStyle(el, "::after").opacity);
+  expect(await opacity()).toBe("0");
+  await handle.hover();
+  expect(await opacity()).toBe("1");
+  await page.mouse.down();
+  await expect(handle).toHaveClass(/--resizing/);
+  expect(
+    await page.locator("body").evaluate((el) => getComputedStyle(el).cursor),
+  ).toBe("ew-resize");
+  await page.mouse.up();
+  await expect(handle).not.toHaveClass(/--resizing/);
+  await page.mouse.move(0, 0);
+  expect(await opacity()).toBe("0");
+  expect(
+    await page.locator("body").evaluate((el) => getComputedStyle(el).cursor),
+  ).not.toBe("ew-resize");
+});
 async function box(el: Locator) {
   return el.evaluate((e) => {
     const r = e.getBoundingClientRect();
@@ -84,7 +109,9 @@ test("headerless drawer supports custom and slot drag handles without intercepti
   await p.getByRole("button", { name: "放大 / 还原" }).click();
   await p.getByRole("button", { name: "复位位置" }).click();
   await expect(p).toHaveAttribute("data-mode", "docked");
-  await p.getByRole("button", { name: "关闭无标题栏抽屉", exact: true }).click();
+  await p
+    .getByRole("button", { name: "关闭无标题栏抽屉", exact: true })
+    .click();
   await expect(p).not.toBeVisible();
 });
 test.afterEach(async ({ page }) => {

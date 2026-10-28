@@ -266,10 +266,55 @@
   border-radius: 3px;
 }
 .draggable-popup__handle:hover,
-.draggable-popup__handle:focus-visible {
-  background: var(--ant-color-primary-bg, #e6f4ff);
-  outline: 2px solid var(--dp-primary-color, var(--ant-color-primary, #1677ff));
+.draggable-popup__handle:focus-visible,
+.draggable-popup__handle--resizing {
+  outline: none;
 }
+.draggable-popup__handle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  opacity: 0;
+  background: var(--dp-resize-color, var(--ant-color-primary, #1677ff));
+  transition: opacity 120ms ease;
+  pointer-events: none;
+}
+.draggable-popup__handle:is(
+    :hover,
+    :focus-visible,
+    .draggable-popup__handle--resizing
+  )::after {
+  opacity: 1;
+}
+.draggable-popup__handle--ml::after,
+.draggable-popup__handle--mr::after {
+  left: calc(50% - 1px);
+  width: 2px;
+}
+.draggable-popup__handle--tm::after,
+.draggable-popup__handle--bm::after {
+  top: calc(50% - 1px);
+  height: 2px;
+}
+.draggable-popup__handle:is(
+    .draggable-popup__handle--tl,
+    .draggable-popup__handle--tr,
+    .draggable-popup__handle--bl,
+    .draggable-popup__handle--br
+  )::after {
+  background: transparent;
+  border: 2px solid var(--dp-resize-color, var(--ant-color-primary, #1677ff));
+}
+@media (prefers-reduced-motion: reduce) {
+  .draggable-popup__handle::after {
+    transition: none;
+  }
+}
+.draggable-popup__handle--tl::after { border-width: 2px 0 0 2px !important; }
+.draggable-popup__handle--tr::after { border-width: 2px 2px 0 0 !important; }
+.draggable-popup__handle--bl::after { border-width: 0 0 2px 2px !important; }
+.draggable-popup__handle--br::after { border-width: 0 2px 2px 0 !important; }
 .draggable-popup__handle--tl,
 .draggable-popup__handle--tr,
 .draggable-popup__handle--bl,
@@ -296,13 +341,6 @@
   bottom: 0;
   right: 0;
   cursor: nwse-resize;
-  background: linear-gradient(
-    135deg,
-    transparent 45%,
-    var(--ant-color-text-quaternary, rgb(0 0 0 / 25%)) 45%,
-    var(--ant-color-text-quaternary, rgb(0 0 0 / 25%)) 55%,
-    transparent 55%
-  );
 }
 .draggable-popup__handle--tm,
 .draggable-popup__handle--bm {

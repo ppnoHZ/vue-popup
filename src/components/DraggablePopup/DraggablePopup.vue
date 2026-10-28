@@ -243,6 +243,7 @@ const maximized = ref(false);
 let restoreRect: PopupRect | undefined;
 let liveInteractionRect: PopupRect | undefined;
 const dragOrigin = ref<{ x: number; y: number }>();
+const activeResize = ref<ResizeHandle>();
 const rect = reactive<PopupRect>({
   x: 0,
   y: 0,
@@ -634,6 +635,20 @@ function start(
     pointer = e.pointerId,
     kind = handle ? "resize" : "drag";
   const captureTarget = dragTarget ?? (e.currentTarget as HTMLElement);
+  activeResize.value = handle;
+  const cursorStyle = handle ? document.createElement("style") : undefined;
+  if (cursorStyle) {
+    const cursor =
+      handle === "ml" || handle === "mr"
+        ? "ew-resize"
+        : handle === "tm" || handle === "bm"
+          ? "ns-resize"
+          : handle === "tl" || handle === "br"
+            ? "nwse-resize"
+            : "nesw-resize";
+    cursorStyle.textContent = `html * { cursor: ${cursor} !important; }`;
+    document.head.append(cursorStyle);
+  }
   if (!handle) dragOrigin.value = { x: initial.x, y: initial.y };
   liveInteractionRect = { ...initial };
   let published = { ...initial };
@@ -710,6 +725,8 @@ function start(
     if (event && event.pointerId !== pointer) return;
     if (!active.value) return;
     active.value = false;
+    activeResize.value = undefined;
+    cursorStyle?.remove();
     frames.flush();
     frames.cancel();
     liveInteractionRect = undefined;
@@ -973,6 +990,7 @@ defineExpose<PopupExpose>({
             :class="[
               'draggable-popup__handle',
               `draggable-popup__handle--${handle}`,
+              { 'draggable-popup__handle--resizing': activeResize === handle },
             ]"
             :data-handle="handle"
             role="separator"
