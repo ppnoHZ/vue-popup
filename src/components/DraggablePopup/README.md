@@ -44,7 +44,7 @@ Demo 的“无 Header 自定义拖动”可切换工具栏选择器、拖动条�
 
 Vue 3.5 + TypeScript 通用非模态浮动面板。基础组件只依赖 Vue 和 `@floating-ui/vue`，不依赖 Ant Design Vue。复制此目录即可在其他 Vue 工程中使用；入口支持默认/具名导入，CSS 随组件导入。
 
-使用构建好的 npm tarball 时，从 `vue-draggable-popup` 导入组件，并额外 `import 'vue-draggable-popup/style.css'`。`npm run pack:lib` 生成 ESM、CommonJS、类型声明和可安装的包，详见项目根 README。
+使用构建好的 npm tarball 时，从 `vue-floating-panels` 导入组件，并额外 `import 'vue-floating-panels/style.css'`。`npm run pack:lib` 生成 ESM、CommonJS、类型声明和可安装的包，详见项目根 README。
 
 ```sh
 npm install vue @floating-ui/vue

@@ -10,10 +10,10 @@
 npm run pack:lib
 ```
 
-生成 `lib/index.js`（ESM）、`lib/index.cjs`（CommonJS）、`lib/style.css` 和 `lib/types/`，以及可安装的 `vue-draggable-popup-1.0.0.tgz`。该命令还会在独立临时项目安装 tarball，检查 ESM/CJS 导出及严格 TypeScript 类型。Vue 是 peer dependency，Floating UI 为运行依赖，Ant Design Vue 仅为 Demo 开发依赖。
+生成 `lib/index.js`（ESM）、`lib/index.cjs`（CommonJS）、`lib/style.css` 和 `lib/types/`，以及可安装的 `vue-floating-panels-1.0.0.tgz`。该命令还会在独立临时项目安装 tarball，检查 ESM/CJS 导出及严格 TypeScript 类型。Vue 是 peer dependency，Floating UI 为运行依赖，Ant Design Vue 仅为 Demo 开发依赖。
 
 ```sh
-npm install ./vue-draggable-popup-1.0.0.tgz
+npm install ./vue-floating-panels-1.0.0.tgz
 ```
 
 ```ts
@@ -21,11 +21,11 @@ import {
   DraggablePopup,
   DraggableModal,
   DraggableDrawer,
-} from "vue-draggable-popup";
-import "vue-draggable-popup/style.css";
+} from "vue-floating-panels";
+import "vue-floating-panels/style.css";
 ```
 
-`.github/workflows/component-build.yml` 在 push、PR 和手动触发时，使用 Node 24 执行类型检查、Lint、单元测试、Chromium E2E、Demo 构建与组件打包。成功后可在 GitHub Actions 的 Artifacts 下载 `vue-draggable-popup-<commit SHA>`（保留 30 天），浏览器报告保留 7 天。此流程产出组件包，不自动发布到 npm registry。
+`.github/workflows/component-build.yml` 在 push、PR 和手动触发时，使用 Node 24 执行类型检查、Lint、单元测试、Chromium E2E、Demo 构建与组件打包。成功后可在 GitHub Actions 的 Artifacts 下载 `vue-floating-panels-<commit SHA>`（保留 30 天），浏览器报告保留 7 天。此流程产出组件包，不自动发布到 npm registry。
 
 抽屉可配置 `:height="520"`，默认提供竖直缩放手柄；高度可增可减，并可超过初始高度。未指定 height 时铺满视口。Drawer 不再默认被 800px 限制，显式 maxHeight 仍生效，最终始终受视口安全边距约束。
 

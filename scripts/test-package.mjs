@@ -43,9 +43,9 @@ try {
     join(consumer, "smoke.mjs"),
     `import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import Default, {DraggablePopup,DraggableModal,DraggableDrawer} from 'vue-draggable-popup';
+import Default, {DraggablePopup,DraggableModal,DraggableDrawer} from 'vue-floating-panels';
 assert.equal(Default,DraggablePopup);
-const commonjs=createRequire(import.meta.url)('vue-draggable-popup');
+const commonjs=createRequire(import.meta.url)('vue-floating-panels');
 for(const name of ['DraggablePopup','DraggableModal','DraggableDrawer'])assert.ok(commonjs[name]);
 assert.ok(DraggableModal);assert.ok(DraggableDrawer);
 `,
@@ -54,8 +54,8 @@ assert.ok(DraggableModal);assert.ok(DraggableDrawer);
   writeFileSync(
     join(consumer, "consumer.ts"),
     `import {h} from 'vue';
-import {DraggablePopup,DraggableModal,DraggableDrawer} from 'vue-draggable-popup';
-import type {PopupProps,PopupExpose,DraggableDrawerProps,DraggableModalProps} from 'vue-draggable-popup';
+import {DraggablePopup,DraggableModal,DraggableDrawer} from 'vue-floating-panels';
+import type {PopupProps,PopupExpose,DraggableDrawerProps,DraggableModalProps} from 'vue-floating-panels';
 const base:PopupProps={open:true,height:320,showHeader:false,dragHandle:'.toolbar'};
 const drawer:DraggableDrawerProps={open:true,height:'320px',showHeader:false,dragHandle:()=>document.querySelector<HTMLElement>('.toolbar'),onClose:(e:MouseEvent)=>{void e.type}};
 const modal:DraggableModalProps={open:true,confirmLoading:false,onCancel:(e:MouseEvent)=>{void e.type}};
