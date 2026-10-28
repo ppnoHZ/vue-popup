@@ -1,10 +1,16 @@
-# Vue DraggablePopup
+# vue-floating-panels
 
-已发布到 npm：[vue-floating-panels](https://www.npmjs.com/package/vue-floating-panels)。
+Vue 3.5 + TypeScript 非模态浮动面板：锚点弹窗 `DraggablePopup`、居中模态框 `DraggableModal`、停靠抽屉 `DraggableDrawer`。支持拖动、八方向缩放、放大/还原、边缘吸附。基础组件仅依赖 Vue 与 `@floating-ui/vue`，不依赖 Ant Design Vue（仅 Demo 使用）。
+
+[![npm](https://img.shields.io/npm/v/vue-floating-panels)](https://www.npmjs.com/package/vue-floating-panels)
+
+## 安装
 
 ```sh
 npm install vue-floating-panels
 ```
+
+## 快速开始
 
 ```vue
 <script setup lang="ts">
@@ -25,82 +31,217 @@ const drawer = ref<PopupExpose>();
 </template>
 ```
 
-按需导入 `DraggablePopup`（锚点弹窗）、`DraggableModal`（居中模态框）或 `DraggableDrawer`（停靠抽屉）。基础组件无需 Ant Design Vue。完整 [API 参考](docs/API.md) 与 [Antdv 迁移指南](src/components/DraggablePopup/MIGRATION.md)。
+锚点弹窗（`v-model` + `trigger` 插槽）：
 
-所有面板默认支持四边和四角缩放，宽高仅受视口安全边界限制；业务上限可显式配置 maxWidth/maxHeight。触限后反向拉动立即响应。Demo 将实时诊断区隔离为独立组件，避免连续缩放时反复重绘整页 Antdv 表单。
-
-支持视口边缘吸附（默认 16px），可通过 `snapToEdge` / `snapThreshold` 配置；Demo 提供开关和吸附距离输入框。边缘及角落吸附不改变窗口尺寸，拖离边缘可继续自由移动。
-
-## 组件打包与 GitHub Actions
-
-```sh
-npm run pack:lib
+```vue
+<DraggablePopup
+  v-model="open"
+  title="配置"
+  :resize-handles="['br', 'mr', 'bm']"
+>
+  <template #trigger><button>打开配置</button></template>
+  <label>名称 <input /></label>
+  <template #footer><button @click="open = false">保存</button></template>
+</DraggablePopup>
 ```
 
-生成 `lib/index.js`（ESM）、`lib/index.cjs`（CommonJS）、`lib/style.css` 和 `lib/types/`，以及可安装的 `vue-floating-panels-1.0.0.tgz`。该命令还会在独立临时项目安装 tarball，检查 ESM/CJS 导出及严格 TypeScript 类型。Vue 是 peer dependency，Floating UI 为运行依赖，Ant Design Vue 仅为 Demo 开发依赖。
+`DraggableModal` / `DraggableDrawer` 面向 Ant Design Vue 迁移：支持 `v-model:open`（兼容 `visible`）、`title/extra/footer/closeIcon/okText/cancelText` 等插槽，差异见[迁移指南](https://github.com/ppnoHZ/vue-popup/blob/main/src/components/DraggablePopup/MIGRATION.md)。
 
-```sh
-npm install ./vue-floating-panels-1.0.0.tgz
-```
+## Props
+
+`Placement` 为 Floating UI 的 12 种方向；`ResizeHandle` 为 `tl | tm | tr | mr | br | bm | bl | ml`。
+
+| 属性                    | 类型                             | 默认                                     |
+| ----------------------- | -------------------------------- | ---------------------------------------- |
+| modelValue              | boolean                          | —                                        |
+| open / visible          | boolean，Antdv 风格绑定          | —                                        |
+| variant                 | 'popup'、'drawer'、'modal'       | popup（open/visible 无锚点时自动 modal） |
+| title                   | string                           | Popup                                    |
+| showHeader              | boolean                          | true                                     |
+| dragHandle              | string、HTMLElement、函数、false | 内置 Header                              |
+| maximizable             | boolean                          | true                                     |
+| placement               | Placement                        | bottom-start                             |
+| offset                  | number                           | 8                                        |
+| boundaryPadding         | number                           | 8                                        |
+| autoFlip / autoShift    | boolean                          | true / true                              |
+| width / height          | number                           | 360 / 280                                |
+| minWidth / minHeight    | number                           | 260 / 180                                |
+| maxWidth / maxHeight    | number                           | 仅受视口限制，显式配置时按上限约束       |
+| draggable / resizable   | boolean                          | true / true                              |
+| resizeHandles           | ResizeHandle[]                   | 全部 8 个方向                            |
+| keepInViewport          | boolean                          | true                                     |
+| snapToEdge              | boolean                          | true                                     |
+| snapThreshold           | number                           | 16（px）                                 |
+| anchorHiddenBehavior    | 'keep'、'hide'、'close'          | keep                                     |
+| closeOnOutsideClick     | boolean                          | false                                    |
+| closeOnEsc              | boolean                          | true                                     |
+| motion / motionDuration | boolean / number                 | true / 200（ms）                         |
+| teleportTo              | string 或 HTMLElement            | body                                     |
+| zIndex                  | number                           | 2000                                     |
+| trigger                 | 'click' 或 'manual'              | click                                    |
+
+- `width/height` 仅初始化时读取；后续修改 Props 不覆盖用户尺寸，`resetSize()` 读取最新值。关闭再打开保留最近有效尺寸。
+- 视口不足时有效最大尺寸受安全边距限制；视口恢复时不自动放大已裁剪尺寸。
+- `keepInViewport=false` 允许自由模式位置离开视口。
+
+完整类型见 [API 参考](https://github.com/ppnoHZ/vue-popup/blob/main/docs/API.md)。
+
+## Events
+
+| 事件                               | 参数与时机                                         |
+| ---------------------------------- | -------------------------------------------------- |
+| update:modelValue                  | boolean，内部请求改变显隐，调用方通过 v-model 接受 |
+| open                               | 实际变为打开                                       |
+| close                              | `{reason: CloseReason}`，实际变为关闭              |
+| mode-change                        | `{mode: 'anchored' \| 'detached' \| 'docked'}`     |
+| maximize-change                    | `{maximized, rect}`                                |
+| placement-change                   | `{placement}`，最终定位方向改变                    |
+| drag-start / drag / drag-end       | PopupRect                                          |
+| resize-start / resize / resize-end | PopupRect                                          |
 
 ```ts
-import {
-  DraggablePopup,
-  DraggableModal,
-  DraggableDrawer,
-} from "vue-floating-panels";
-import "vue-floating-panels/style.css";
+type CloseReason =
+  | "trigger"
+  | "close-button"
+  | "outside"
+  | "escape"
+  | "programmatic"
+  | "anchor-removed"
+  | "anchor-hidden";
+interface PopupRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 ```
 
-`.github/workflows/component-build.yml` 在 push、PR 和手动触发时，使用 Node 24 执行类型检查、Lint、单元测试、Chromium E2E、Demo 构建与组件打包。成功后可在 GitHub Actions 的 Artifacts 下载 `vue-floating-panels-<commit SHA>`（保留 30 天），浏览器报告保留 7 天。此流程产出组件包，不自动发布到 npm registry。
+几何值为视口 CSS 像素；每次交互只发射一次 end。模式与方向也可从面板 DOM 的 `data-mode`、`data-placement`、`data-maximized` 读取。
 
-### 手动发布到 npm
+## Slots 与公开方法
 
-`.github/workflows/npm-publish.yml` 仅允许从 `main` 手动发布。它会校验输入版本与 `package.json` 一致且 npm 上尚未存在，再执行类型检查、Lint、单元测试、Chromium E2E、Demo 构建、组件打包和 tarball 安装验证。正式发布使用 npm Trusted Publishing（GitHub OIDC）并启用 provenance，无需保存长期发布 Token。
+| Slot       | 说明                                     |
+| ---------- | ---------------------------------------- |
+| trigger    | 锚点；manual 模式仅定位                  |
+| header     | 自定义标题内容，复位与关闭按钮仍保留     |
+| dragHandle | 独立拖动条，渲染于标题栏之后、内容区之前 |
+| default    | 可滚动正文                               |
+| footer     | 固定底部操作区                           |
 
-首次使用前，在 npm 的 `vue-floating-panels → Settings → Trusted Publisher` 中选择 GitHub Actions，并配置用户 `ppnoHZ`、仓库 `vue-popup`、工作流文件 `npm-publish.yml`，Environment 留空，同时允许 `npm publish`。工作流使用 GitHub 托管 Runner 和 `id-token: write` 获取一次性 OIDC 凭证。
+标题栏中的自定义交互元素请使用原生 button/input 或 `[data-no-drag]` 标记，避免触发拖动。
 
-发布步骤：
+| 方法                   | 说明                                              |
+| ---------------------- | ------------------------------------------------- |
+| resetPosition()        | 退出放大，popup 恢复 anchored，drawer 恢复 docked |
+| resetSize()            | 恢复最新 width/height Props                       |
+| updatePosition()       | anchored 重算定位；detached 仅约束视口            |
+| getRect()              | 当前或上次有效几何（副本）                        |
+| maximize() / restore() | 放大 / 还原                                       |
+| toggleMaximize()       | 切换放大状态                                      |
+| isMaximized()          | 当前是否放大                                      |
 
-1. 更新 `package.json` 和 `package-lock.json` 版本，例如 `npm version patch --no-git-tag-version`，提交并推送到 `main`。
-2. 打开 GitHub `Actions → Publish npm package → Run workflow`，选择 `main`，输入与 `package.json` 完全相同的版本和 dist-tag。
-3. 首次保留 `dry_run=true` 检查完整流程；通过后再次运行并取消 dry-run，正式发布。
+## 功能说明
 
-同一时间只允许一个发布任务。已存在的版本、非 `main` 分支或版本不一致都会直接终止；生成的 tarball 会作为 Artifact 保留 30 天。Trusted Publisher 配置后需在 npm 要求的有效期内完成首次正式发布。
+### 抽屉与放大
 
-抽屉可配置 `:height="520"`，默认提供竖直缩放手柄；高度可增可减，并可超过初始高度。未指定 height 时铺满视口。Drawer 不再默认被 800px 限制，显式 maxHeight 仍生效，最终始终受视口安全边距约束。
+- 抽屉是 `variant="drawer"`：非模态、无蒙层、不锁滚动。打开时为 `docked`，贴视口右侧；首次拖动或缩放后变为 `detached`，复位回右侧。
+- 指定 `height`（如 `:height="520"`）作为初始高度，可增可减；未指定则铺满视口。宽高默认仅受视口限制，显式 `maxWidth/maxHeight` 仍生效。
+- 标题栏默认有“放大/还原”按钮（`maximizable=false` 关闭）。放大占满视口减 `boundaryPadding`，不使用浏览器 Fullscreen API，还原恢复原位置、尺寸与模式；关闭重开不保留放大尺寸。
+- 额外的 `class/style/data-*` 会转发到面板，可按实例设置 `style="--dp-radius: 4px"`。
 
-Ant Design Vue 迁移可使用具名 `DraggableModal`、`DraggableDrawer`：支持 `v-model:open`、常用 Props 与同名插槽。Demo 增加两个迁移示例；兼容矩阵和事件差异见 [迁移指南](src/components/DraggablePopup/MIGRATION.md)。原 DraggablePopup API 保持可用。
+### 缩放
 
-此交付工作区原为空目录，没有可复用的业务代码、配置或测试框架。采用 Vue 3.5、TypeScript、Vite，新增组件与独立 Demo；未覆盖既有业务文件。原始 PRD 读取自 `D:/Downloads/DraggablePopup_PRD_Codex.md`。
+默认提供四边与四角手柄，可用 `resizeHandles` 限制。到达最小/最大尺寸或视口边界时丢弃超限位移，反向拉动立即响应；缩放期间高亮分隔线并锁定光标。可用 `--dp-resize-color` 改色。
 
-## 运行
+### 视口边缘吸附
+
+`snapToEdge`（默认开）与 `snapThreshold`（默认 16px）：拖动时距安全边界不超过阈值即贴边，角落可双轴吸附；只移动位置，不改变尺寸，拖离后继续自由移动。缩放、放大和 `keepInViewport=false` 时不吸附。
+
+```vue
+<DraggableDrawer
+  v-model:open="open"
+  :height="520"
+  :snap-to-edge="true"
+  :snap-threshold="24"
+/>
+```
+
+### 无 Header 与自定义拖动入口
+
+`:show-header="false"` 隐藏内置标题栏（请用 `aria-label` / `aria-labelledby` 命名面板）。`dragHandle` 可为选择器、元素或返回元素的函数；`false` 关闭所有拖动入口（缩放仍可用）。选择器仅在面板内匹配，未匹配时不会回退到整个内容区。
+
+```vue
+<DraggableDrawer
+  v-model:open="open"
+  :show-header="false"
+  drag-handle="[data-drag-handle]"
+  aria-label="编辑配置"
+>
+  <div data-drag-handle class="custom-drag-handle">⠿ 拖动面板</div>
+  <template #footer><button @click="open = false">关闭</button></template>
+</DraggableDrawer>
+```
+
+自定义句柄请设置 `cursor: move; touch-action: none;`。也可用无参数的 `#dragHandle` 插槽，包装层自动处理光标与 `touch-action`。按钮、输入框、链接、`role=button`、可编辑内容和 `[data-no-drag]` 不触发拖动。
+
+### 锚点滚出视口
+
+`anchorHiddenBehavior`：`keep`（默认）保持；`hide` 暂时隐藏并在锚点重新可见时恢复；`close` 以 `anchor-hidden` 请求关闭。仅对未放大的 anchored 面板生效，基于 IntersectionObserver，不检测被其他元素遮挡。
+
+### 动画
+
+默认 `motion=true`、`motionDuration=200`。Popup/Modal 淡入淡出，Drawer 按停靠方向展开，放大/还原/复位平滑过渡；拖动、缩放与锚点跟随无延迟。`:motion="false"` 关闭，自动尊重 `prefers-reduced-motion`。
+
+### 坐标与生命周期
+
+- 使用 `position:fixed` 与视口坐标；边界按 `document.documentElement.clientWidth/clientHeight` 并扣除滚动条。
+- 默认 Teleport 到 `body`，避开祖先 transform/overflow 裁剪；自定义 `teleportTo` 目标须无 transform/filter/perspective/contain。
+- 多实例按 DOM 层级确定层叠，仅最上层响应 Esc。
+- 锚点元素被移除时请求 `anchor-removed` 关闭；detached 保持打开。
+
+## Ant Design Vue 集成
+
+面板不加遮罩、不锁滚动、不抢焦点。开启 `closeOnOutsideClick` 时，二级弹层需挂载到面板内：
+
+```ts
+const getPopupContainer = (trigger: HTMLElement) =>
+  (trigger.closest(".draggable-popup") as HTMLElement) || document.body;
+```
+
+```vue
+<a-select :get-popup-container="getPopupContainer" :options="options" />
+<a-date-picker :get-popup-container="getPopupContainer" />
+```
+
+## 样式
+
+BEM 前缀 `.draggable-popup`。可覆盖 `--dp-bg`、`--dp-border-color`、`--dp-radius`、`--dp-shadow`、`--dp-header-height`、`--dp-header-bg`、`--dp-text-color`、`--dp-primary-color`、`--dp-font-family`、`--dp-font-size`。优先级：`--dp-*` → `--ant-*` → 内置默认值。变量需设置在 Teleport 目标的祖先或全局选择器上。
+
+Ant Design Vue 4 的 Design Token 不自动生成 CSS 变量；Demo 的 `src/demo/useAntTheme.ts` 演示了如何用 `theme.useToken()` 映射为 `--ant-*` 变量。
+
+## 限制
+
+面向浏览器客户端；未验收 SSR、移动端完整手势及 Firefox/WebKit。暂未实现键盘移动/缩放、位置持久化、受控 rect。
+
+## 开发
 
 ```sh
 npm ci
-npm run dev -- --port 5187 --strictPort
+npm run dev -- --port 5187 --strictPort   # Demo: http://127.0.0.1:5187/examples/draggable-popup
+npm run typecheck && npm run lint && npm test
+npm run test:e2e      # 默认使用本机 Chrome；否则 npx playwright install chromium 后设置 PW_CHANNEL=chromium
+npm run build         # 构建 Demo
+npm run pack:lib      # 构建、校验并打包组件库（lib/ 与 tgz，不提交）
 ```
 
-访问 http://127.0.0.1:5187/examples/draggable-popup （无路由工程，Vite fallback 和根路径均显示同一 Demo）。四角按钮和滚动容器按钮可独立打开；控制区提供拖动、缩放、全部手柄、外部关闭、placement、初始尺寸、双面板、复位尺寸和移除锚点。状态面板实时显示几何和事件。
+验收结果见 [ACCEPTANCE.md](https://github.com/ppnoHZ/vue-popup/blob/main/docs/ACCEPTANCE.md)，性能报告见 [performance](https://github.com/ppnoHZ/vue-popup/blob/main/docs/performance/README.md)。
 
-“打开右侧抽屉”展示 `variant="drawer"`：支持拖动、八方向缩放、复位贴右。所有面板标题栏都支持一键放大/还原，抽屉底部也提供公开方法调用示例。放大保留普通位置与尺寸，随视口变化，关闭重开恢复普通尺寸。
+## 发布
 
-## 验证
+`.github/workflows/component-build.yml` 在 push/PR 上执行类型检查、Lint、单元测试、E2E、构建与打包，并上传 tarball Artifact。
 
-```sh
-npm run typecheck
-npm run lint
-npm run build
-npm test
-npm run test:e2e
-```
+`.github/workflows/npm-publish.yml` 仅允许从 `main` 手动发布，使用 npm Trusted Publishing（GitHub OIDC）与 provenance。首次使用需在 npm 的 Trusted Publisher 中配置用户 `ppnoHZ`、仓库 `vue-popup`、工作流 `npm-publish.yml`。步骤：
 
-E2E 默认使用本机 Chrome（Chromium 内核），独立启动 5187 端口且禁止复用其他服务器。没有本机 Chrome 时，运行 `npx playwright install chromium`，再设置环境变量 `PW_CHANNEL=chromium` 运行。PowerShell：`$env:PW_CHANNEL='chromium'; npm run test:e2e`。测试不使用固定 sleep，几何容差为 0.5 CSS 像素，通过 Playwright 自动等待和轮询定位。
-
-- [完整组件 API、交互、选型与 Ant Design Vue 接入](src/components/DraggablePopup/README.md)
-- [逐项验收与实际测试结果](docs/ACCEPTANCE.md)
-- [浏览器截图](docs/demo.png)
-
-源码入口：`src/components/DraggablePopup/index.ts`。Demo：`src/demo/App.vue`。基础组件运行依赖仅为 Vue 与 Floating UI；Ant Design Vue 只用于 Demo。
-
-# vue-popup
+1. `npm version patch --no-git-tag-version`，提交并推送到 `main`。
+2. 在 GitHub `Actions → Publish npm package → Run workflow`，输入与 `package.json` 一致的版本和 dist-tag。
+3. 先用 `dry_run=true` 检查，再取消 dry-run 正式发布。
