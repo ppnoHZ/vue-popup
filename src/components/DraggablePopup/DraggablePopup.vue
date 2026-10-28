@@ -38,6 +38,7 @@ import { resolveDragHandle } from "./composables/dragHandle";
 
 const props = withDefaults(defineProps<PopupProps>(), {
   showHeader: true,
+  anchorHiddenBehavior: "keep",
   dragHandle: undefined,
   modelValue: undefined,
   open: undefined,
@@ -260,6 +261,36 @@ const reference = computed(() =>
   isOpen.value && mode.value === "anchored" && !maximized.value
     ? anchor.value
     : undefined,
+);
+const anchorHidden = ref(false);
+watch(
+  [reference, () => props.anchorHiddenBehavior],
+  ([element, behavior], _, onCleanup) => {
+    anchorHidden.value = false;
+    if (
+      !element ||
+      behavior === "keep" ||
+      typeof IntersectionObserver === "undefined"
+    )
+      return;
+    let requested = false;
+    const visibility = new IntersectionObserver(([entry]) => {
+      if (!entry || !element.isConnected) return;
+      const hidden =
+        !entry.isIntersecting ||
+        entry.intersectionRect.width <= 0 ||
+        entry.intersectionRect.height <= 0;
+      anchorHidden.value = behavior === "hide" && hidden;
+      if (!hidden) requested = false;
+      if (behavior === "close" && hidden && !requested) {
+        requested = true;
+        requestClose("anchor-hidden");
+      }
+    });
+    visibility.observe(element.firstElementChild ?? element);
+    onCleanup(() => visibility.disconnect());
+  },
+  { flush: "post", immediate: true },
 );
 const floating = useFloating(reference, panel, {
   strategy: "fixed",
@@ -790,6 +821,7 @@ defineExpose<PopupExpose>({
           maskStyle,
           {
             zIndex: layer - 1,
+            visibility: anchorHidden ? 'hidden' : undefined,
             '--dp-motion-duration': `${Math.max(0, motionDuration)}ms`,
           },
         ]"
@@ -851,6 +883,7 @@ defineExpose<PopupExpose>({
             width: `${rect.width}px`,
             height: `${rect.height}px`,
             zIndex: layer,
+            visibility: anchorHidden ? 'hidden' : undefined,
           },
         ]"
         @pointerdown="panelPointerDown"

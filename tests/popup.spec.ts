@@ -1,6 +1,25 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import type { PopupRect } from "../src/components/DraggablePopup";
 const errors = new WeakMap<Page, string[]>();
+test("anchor clipping supports keep hide and close without destroying hidden form state", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByTestId("trigger-4").click();
+  const p = panel(page, 4);
+  const scroller = page.locator(".scroll-container");
+  await p.getByPlaceholder("可正常输入与选字").fill("retained");
+  await scroller.evaluate((el) => (el.scrollTop = el.scrollHeight));
+  await expect(p).toBeVisible();
+  await page.getByLabel("锚点不可见时").selectOption("hide");
+  await expect(p).toBeHidden();
+  await scroller.evaluate((el) => (el.scrollTop = 0));
+  await expect(p).toBeVisible();
+  await expect(p.getByPlaceholder("可正常输入与选字")).toHaveValue("retained");
+  await page.getByLabel("锚点不可见时").selectOption("close");
+  await scroller.evaluate((el) => (el.scrollTop = el.scrollHeight));
+  await expect(p).toBeHidden();
+});
 test("resize separator highlights only on hover or interaction and releases global cursor", async ({
   page,
 }) => {

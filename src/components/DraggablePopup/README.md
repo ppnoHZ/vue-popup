@@ -1,5 +1,7 @@
 # DraggablePopup
 
+`anchorHiddenBehavior="keep" | "hide" | "close"` 控制锚点完全滚出视口或祖先裁剪区域后的行为，默认 keep。hide 暂时隐藏面板，保留表单与 open 状态，锚点重新可见时恢复；close 请求关闭，原因是 anchor-hidden，仍由调用方更新绑定。仅 anchored 且未放大时启用；detached、停靠、居中和放大不受影响。使用 IntersectionObserver 判断几何交集，不检测其他元素遮挡；不支持该 API 的环境保留面板。Demo 提供策略切换。
+
 缩放采用分隔线式反馈：默认隐藏装饰，悬停或键盘聚焦时显示 2px 细线，角落显示 L 形线条；缩放期间持续高亮并锁定页面缩放光标，结束、取消或卸载时释放。热区与原有八方向几何规则保持一致。可用 `--dp-resize-color` 覆盖高亮颜色，默认使用 Antdv 主色；减少动态效果偏好下关闭淡入动画。
 
 ## 无 Header 与自定义拖动入口

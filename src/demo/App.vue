@@ -13,6 +13,7 @@ import type {
   ResizeHandle,
 } from "../components/DraggablePopup";
 const visible = reactive([false, false, false, false, false]);
+const anchorBehavior = ref<"keep" | "hide" | "close">("keep");
 const migrationModalOpen = ref(false),
   migrationDrawerOpen = ref(false),
   migrationLoading = ref(false);
@@ -75,6 +76,7 @@ function popupContainer(trigger: HTMLElement) {
       <p>锚点定位 · 自由拖动 · 八方向缩放</p>
     </div>
     <section class="controls">
+      <label>锚点不可见时 <select v-model="anchorBehavior" aria-label="锚点不可见时"><option value="keep">保留</option><option value="hide">隐藏</option><option value="close">关闭</option></select></label>
       <DraggableDrawer
         ref="headerlessPanel"
         v-model:open="headerlessOpen"
@@ -342,6 +344,7 @@ function popupContainer(trigger: HTMLElement) {
                 :draggable="draggable"
                 :resizable="resizable"
                 :snap-to-edge="snap"
+                :anchor-hidden-behavior="anchorBehavior"
                 :snap-threshold="snapDistance"
                 :close-on-outside-click="outside"
                 :resize-handles="all ? handles : ['br']"

@@ -22,7 +22,8 @@ export type CloseReason =
   | "outside"
   | "escape"
   | "programmatic"
-  | "anchor-removed";
+  | "anchor-removed"
+  | "anchor-hidden";
 export interface PopupRect {
   x: number;
   y: number;
@@ -30,6 +31,7 @@ export interface PopupRect {
   height: number;
 }
 export interface PopupProps {
+  anchorHiddenBehavior?: "keep" | "hide" | "close";
   modelValue?: boolean;
   open?: boolean;
   /** Ant Design Vue 3 compatibility; open takes precedence. */
