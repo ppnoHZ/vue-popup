@@ -82,7 +82,7 @@ const open = ref(false);
 | `extra` | 标题栏附加操作。 |
 | `default` | 面板正文。 |
 | `footer` | 底部操作区。 |
-| `dragHandle` | 独立拖动条，优先于默认标题栏。 |
+| `dragHandle` | 独立拖动条，优先于默认标题栏；禁用拖动或面板放大时不渲染，避免保留无效热区。 |
 | `closeIcon` / `okText` / `cancelText` | 覆盖对应内容。 |
 
 通过 `ref<PopupExpose>()` 调用：`getRect()`、`updatePosition()`、`resetPosition()`、`resetSize()`、`maximize()`、`restore()`、`toggleMaximize()`、`isMaximized()`。所有方法均无参数；`getRect()` 返回当前逻辑矩形，`isMaximized()` 返回 boolean。

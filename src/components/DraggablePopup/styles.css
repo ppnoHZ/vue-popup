@@ -62,9 +62,12 @@
     var(--dp-border-color, var(--ant-color-border-secondary, #f0f0f0));
   border-radius: var(--dp-radius, var(--ant-border-radius-lg, 8px))
     var(--dp-radius, var(--ant-border-radius-lg, 8px)) 0 0;
+  cursor: default;
+  box-sizing: border-box;
+}
+.draggable-popup--draggable .draggable-popup__header {
   cursor: move;
   touch-action: none;
-  box-sizing: border-box;
 }
 .draggable-popup__title {
   flex: 1;
@@ -255,9 +258,6 @@
   .draggable-popup__spinner {
     animation: none;
   }
-}
-.draggable-popup--maximized .draggable-popup__header {
-  cursor: default;
 }
 .draggable-popup__handle {
   position: absolute;

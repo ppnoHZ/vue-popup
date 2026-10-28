@@ -532,6 +532,51 @@ describe("DraggablePopup contract", () => {
     expect(w.vm.getRect()).toEqual(before);
     w.unmount();
   });
+  it("removes unavailable drag, resize and maximize affordances", async () => {
+    const w = mount(Popup, {
+      props: {
+        modelValue: true,
+        draggable: false,
+        resizable: false,
+        maximizable: false,
+        motion: false,
+      },
+      slots: { dragHandle: '<span class="grip">拖动</span>' },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    const p = document.querySelector<HTMLElement>(".draggable-popup")!;
+    expect(p.dataset.draggable).toBe("false");
+    expect(p.dataset.resizable).toBe("false");
+    expect(p.dataset.maximizable).toBe("false");
+    expect(p.classList.contains("draggable-popup--draggable")).toBe(false);
+    expect(p.querySelector(".draggable-popup__drag-handle")).toBeNull();
+    expect(p.querySelector("[data-handle]")).toBeNull();
+    expect(p.querySelector('[aria-label="放大面板"]')).toBeNull();
+
+    await w.setProps({
+      draggable: true,
+      resizable: true,
+      maximizable: true,
+    });
+    expect(p.dataset.draggable).toBe("true");
+    expect(p.dataset.resizable).toBe("true");
+    expect(p.dataset.maximizable).toBe("true");
+    expect(p.classList.contains("draggable-popup--draggable")).toBe(true);
+    expect(p.querySelector(".draggable-popup__drag-handle")).not.toBeNull();
+    expect(p.querySelector("[data-handle]")).not.toBeNull();
+    expect(p.querySelector('[aria-label="放大面板"]')).not.toBeNull();
+
+    w.vm.maximize();
+    await nextTick();
+    expect(p.dataset.draggable).toBe("false");
+    expect(p.dataset.resizable).toBe("false");
+    expect(p.classList.contains("draggable-popup--draggable")).toBe(false);
+    expect(p.querySelector(".draggable-popup__drag-handle")).toBeNull();
+    expect(p.querySelector("[data-handle]")).toBeNull();
+    expect(p.querySelector('[aria-label="还原面板"]')).not.toBeNull();
+    w.unmount();
+  });
   it.each(["outside", "escape"] as const)(
     "reports %s close reason and removes document listeners",
     async (reason) => {

@@ -241,6 +241,7 @@ const mode = ref<PopupMode>(initialMode()),
   active = ref(false),
   layer = ref(props.zIndex);
 const maximized = ref(false);
+const canDrag = computed(() => props.draggable && !maximized.value);
 let restoreRect: PopupRect | undefined;
 let liveInteractionRect: PopupRect | undefined;
 const dragOrigin = ref<{ x: number; y: number }>();
@@ -848,6 +849,7 @@ defineExpose<PopupExpose>({
           wrapClassName,
           {
             'draggable-popup--active': active,
+            'draggable-popup--draggable': canDrag,
             'draggable-popup--maximized': maximized,
             'draggable-popup--drawer': effectiveVariant === 'drawer',
             'draggable-popup--geometry-motion': geometryMotion,
@@ -861,6 +863,9 @@ defineExpose<PopupExpose>({
           (showHeader ? `${id}-title` : undefined)
         "
         :data-mode="mode"
+        :data-draggable="canDrag"
+        :data-resizable="resizable && !maximized"
+        :data-maximizable="maximizable"
         :data-maximized="maximized"
         :data-drawer-placement="
           effectiveVariant === 'drawer' ? side : undefined
@@ -959,7 +964,10 @@ defineExpose<PopupExpose>({
             </slot>
           </button>
         </header>
-        <div v-if="$slots.dragHandle" class="draggable-popup__drag-handle">
+        <div
+          v-if="$slots.dragHandle && canDrag"
+          class="draggable-popup__drag-handle"
+        >
           <slot name="dragHandle" />
         </div>
         <div class="draggable-popup__body" :style="bodyStyle"><slot /></div>
