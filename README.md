@@ -54,6 +54,20 @@ import "vue-floating-panels/style.css";
 
 `.github/workflows/component-build.yml` 在 push、PR 和手动触发时，使用 Node 24 执行类型检查、Lint、单元测试、Chromium E2E、Demo 构建与组件打包。成功后可在 GitHub Actions 的 Artifacts 下载 `vue-floating-panels-<commit SHA>`（保留 30 天），浏览器报告保留 7 天。此流程产出组件包，不自动发布到 npm registry。
 
+### 手动发布到 npm
+
+`.github/workflows/npm-publish.yml` 仅允许从 `main` 手动发布。它会校验输入版本与 `package.json` 一致且 npm 上尚未存在，再执行类型检查、Lint、单元测试、Chromium E2E、Demo 构建、组件打包和 tarball 安装验证。正式发布启用 npm provenance。
+
+首次使用前，在 GitHub 仓库 `Settings → Secrets and variables → Actions` 添加名为 `NPM_TOKEN` 的 repository secret。令牌需拥有 `vue-floating-panels` 的读取、发布权限；若 npm 账户启用 2FA，令牌还需允许自动化发布。
+
+发布步骤：
+
+1. 更新 `package.json` 和 `package-lock.json` 版本，例如 `npm version patch --no-git-tag-version`，提交并推送到 `main`。
+2. 打开 GitHub `Actions → Publish npm package → Run workflow`，选择 `main`，输入与 `package.json` 完全相同的版本和 dist-tag。
+3. 首次保留 `dry_run=true` 检查完整流程；通过后再次运行并取消 dry-run，正式发布。
+
+同一时间只允许一个发布任务。已存在的版本、非 `main` 分支或版本不一致都会直接终止；生成的 tarball 会作为 Artifact 保留 30 天。
+
 抽屉可配置 `:height="520"`，默认提供竖直缩放手柄；高度可增可减，并可超过初始高度。未指定 height 时铺满视口。Drawer 不再默认被 800px 限制，显式 maxHeight 仍生效，最终始终受视口安全边距约束。
 
 Ant Design Vue 迁移可使用具名 `DraggableModal`、`DraggableDrawer`：支持 `v-model:open`、常用 Props 与同名插槽。Demo 增加两个迁移示例；兼容矩阵和事件差异见 [迁移指南](src/components/DraggablePopup/MIGRATION.md)。原 DraggablePopup API 保持可用。

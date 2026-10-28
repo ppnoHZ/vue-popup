@@ -1,0 +1,102 @@
+name: Publish npm package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version in package.json (for example 1.0.1)
+        required: true
+        type: string
+      tag:
+        description: npm dist-tag
+        required: true
+        default: latest
+        type: choice
+        options:
+          - latest
+          - next
+          - beta
+      dry_run:
+        description: Validate publication without uploading to npm
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  verify-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PW_CHANNEL: chromium
+      RELEASE_VERSION: ${{ inputs.version }}
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "24"
+          cache: npm
+          registry-url: https://registry.npmjs.org/
+
+      - name: Validate release request
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Releases must run from the main branch."
+            exit 1
+          fi
+
+          package_name="$(node -p "require('./package.json').name")"
+          package_version="$(node -p "require('./package.json').version")"
+
+          if [[ "$package_name" != "vue-floating-panels" ]]; then
+            echo "Unexpected package name: $package_name"
+            exit 1
+          fi
+
+          if [[ "$RELEASE_VERSION" != "$package_version" ]]; then
+            echo "Requested version $RELEASE_VERSION does not match package.json version $package_version."
+            exit 1
+          fi
+
+          if npm view "$package_name@$RELEASE_VERSION" version --registry=https://registry.npmjs.org/ >/dev/null 2>&1; then
+            echo "$package_name@$RELEASE_VERSION already exists on npm."
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run build
+      - run: npm run pack:lib
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: vue-floating-panels-${{ inputs.version }}
+          path: vue-floating-panels-${{ inputs.version }}.tgz
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Preview npm publication
+        if: ${{ inputs.dry_run }}
+        run: npm publish "vue-floating-panels-${RELEASE_VERSION}.tgz" --dry-run --access public --tag "$RELEASE_TAG"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
+        run: npm publish "vue-floating-panels-${RELEASE_VERSION}.tgz" --access public --tag "$RELEASE_TAG" --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
