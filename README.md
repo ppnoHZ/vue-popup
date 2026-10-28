@@ -1,5 +1,32 @@
 # Vue DraggablePopup
 
+已发布到 npm：[vue-floating-panels](https://www.npmjs.com/package/vue-floating-panels)。
+
+```sh
+npm install vue-floating-panels
+```
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+import { DraggableDrawer, type PopupExpose } from "vue-floating-panels";
+import "vue-floating-panels/style.css";
+
+const open = ref(false);
+const drawer = ref<PopupExpose>();
+</script>
+
+<template>
+  <button @click="open = true">打开抽屉</button>
+  <DraggableDrawer ref="drawer" v-model:open="open" title="配置" :width="420">
+    <p>可拖动、缩放；标题栏可放大和还原。</p>
+    <template #footer><button @click="open = false">关闭</button></template>
+  </DraggableDrawer>
+</template>
+```
+
+按需导入 `DraggablePopup`（锚点弹窗）、`DraggableModal`（居中模态框）或 `DraggableDrawer`（停靠抽屉）。基础组件无需 Ant Design Vue。完整 [API 参考](docs/API.md) 与 [Antdv 迁移指南](src/components/DraggablePopup/MIGRATION.md)。
+
 所有面板默认支持四边和四角缩放，宽高仅受视口安全边界限制；业务上限可显式配置 maxWidth/maxHeight。触限后反向拉动立即响应。Demo 将实时诊断区隔离为独立组件，避免连续缩放时反复重绘整页 Antdv 表单。
 
 支持视口边缘吸附（默认 16px），可通过 `snapToEdge` / `snapThreshold` 配置；Demo 提供开关和吸附距离输入框。边缘及角落吸附不改变窗口尺寸，拖离边缘可继续自由移动。
