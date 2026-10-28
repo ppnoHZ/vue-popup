@@ -56,9 +56,9 @@ import "vue-floating-panels/style.css";
 
 ### 手动发布到 npm
 
-`.github/workflows/npm-publish.yml` 仅允许从 `main` 手动发布。它会校验输入版本与 `package.json` 一致且 npm 上尚未存在，再执行类型检查、Lint、单元测试、Chromium E2E、Demo 构建、组件打包和 tarball 安装验证。正式发布启用 npm provenance。
+`.github/workflows/npm-publish.yml` 仅允许从 `main` 手动发布。它会校验输入版本与 `package.json` 一致且 npm 上尚未存在，再执行类型检查、Lint、单元测试、Chromium E2E、Demo 构建、组件打包和 tarball 安装验证。正式发布使用 npm Trusted Publishing（GitHub OIDC）并启用 provenance，无需保存长期发布 Token。
 
-首次使用前，在 GitHub 仓库 `Settings → Secrets and variables → Actions` 添加名为 `NPM_TOKEN` 的 repository secret。令牌需拥有 `vue-floating-panels` 的读取、发布权限；若 npm 账户启用 2FA，令牌还需允许自动化发布。
+首次使用前，在 npm 的 `vue-floating-panels → Settings → Trusted Publisher` 中选择 GitHub Actions，并配置用户 `ppnoHZ`、仓库 `vue-popup`、工作流文件 `npm-publish.yml`，Environment 留空，同时允许 `npm publish`。工作流使用 GitHub 托管 Runner 和 `id-token: write` 获取一次性 OIDC 凭证。
 
 发布步骤：
 
@@ -66,7 +66,7 @@ import "vue-floating-panels/style.css";
 2. 打开 GitHub `Actions → Publish npm package → Run workflow`，选择 `main`，输入与 `package.json` 完全相同的版本和 dist-tag。
 3. 首次保留 `dry_run=true` 检查完整流程；通过后再次运行并取消 dry-run，正式发布。
 
-同一时间只允许一个发布任务。已存在的版本、非 `main` 分支或版本不一致都会直接终止；生成的 tarball 会作为 Artifact 保留 30 天。
+同一时间只允许一个发布任务。已存在的版本、非 `main` 分支或版本不一致都会直接终止；生成的 tarball 会作为 Artifact 保留 30 天。Trusted Publisher 配置后需在 npm 要求的有效期内完成首次正式发布。
 
 抽屉可配置 `:height="520"`，默认提供竖直缩放手柄；高度可增可减，并可超过初始高度。未指定 height 时铺满视口。Drawer 不再默认被 800px 限制，显式 maxHeight 仍生效，最终始终受视口安全边距约束。
 

@@ -5,6 +5,10 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ppnoHZ/vue-popup.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",

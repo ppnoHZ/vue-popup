@@ -43,7 +43,6 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "24"
-          cache: npm
           registry-url: https://registry.npmjs.org/
 
       - name: Validate release request
@@ -92,11 +91,7 @@ jobs:
       - name: Preview npm publication
         if: ${{ inputs.dry_run }}
         run: npm publish "vue-floating-panels-${RELEASE_VERSION}.tgz" --dry-run --access public --tag "$RELEASE_TAG"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to npm
         if: ${{ !inputs.dry_run }}
         run: npm publish "vue-floating-panels-${RELEASE_VERSION}.tgz" --access public --tag "$RELEASE_TAG" --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
