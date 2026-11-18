@@ -55,27 +55,24 @@
   --dp-header-preset-padding: 12px;
   --dp-header-preset-gap: 6px;
   --dp-header-preset-title-size: 14px;
-  --dp-header-preset-action-size: 24px;
-  --dp-header-preset-close-size: 32px;
-  --dp-header-preset-icon-size: 12px;
+  --dp-header-preset-action-size: 28px;
+  --dp-header-preset-icon-size: 14px;
 }
 .draggable-popup[data-header-size="middle"] {
   --dp-header-preset-height: 52px;
   --dp-header-preset-padding: 16px;
   --dp-header-preset-gap: 8px;
   --dp-header-preset-title-size: 16px;
-  --dp-header-preset-action-size: 24px;
-  --dp-header-preset-close-size: 32px;
-  --dp-header-preset-icon-size: 14px;
+  --dp-header-preset-action-size: 32px;
+  --dp-header-preset-icon-size: 16px;
 }
 .draggable-popup[data-header-size="large"] {
   --dp-header-preset-height: 64px;
   --dp-header-preset-padding: 20px;
   --dp-header-preset-gap: 10px;
   --dp-header-preset-title-size: 18px;
-  --dp-header-preset-action-size: 32px;
-  --dp-header-preset-close-size: 40px;
-  --dp-header-preset-icon-size: 16px;
+  --dp-header-preset-action-size: 40px;
+  --dp-header-preset-icon-size: 18px;
 }
 .draggable-popup__header {
   display: flex;
@@ -181,6 +178,8 @@
   }
 }
 .draggable-popup__header button {
+  position: relative;
+  z-index: 3;
   border: 0;
   background: transparent;
   cursor: pointer;
@@ -212,13 +211,6 @@
 .draggable-popup__header button svg {
   width: var(--dp-header-icon-size, var(--dp-header-preset-icon-size, 14px));
   height: var(--dp-header-icon-size, var(--dp-header-preset-icon-size, 14px));
-}
-.draggable-popup__header .draggable-popup__close {
-  position: relative;
-  z-index: 3;
-  width: var(--dp-header-close-size, var(--dp-header-preset-close-size, 32px));
-  height: var(--dp-header-close-size, var(--dp-header-preset-close-size, 32px));
-  margin: -4px;
 }
 .draggable-popup__body {
   flex: 1;

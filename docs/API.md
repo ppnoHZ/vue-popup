@@ -65,7 +65,7 @@ const open = ref(false);
 
 Drawer 停靠边决定主要尺寸：左右侧主要使用预设宽度，上下侧主要使用预设高度。所有预设仍受最小、最大尺寸和视口安全边界限制。
 
-Header 三档高度为 40 / 52 / 64px。可继续使用 `headerStyle` 覆盖普通样式，或通过 `--dp-header-height`、`--dp-header-padding-inline`、`--dp-header-title-font-size`、`--dp-header-action-size`、`--dp-header-close-size` 精确调整。
+Header 三档高度为 40 / 52 / 64px，所有内置图标按钮统一为 28 / 32 / 40px 命中区和 14 / 16 / 18px 图标。可继续使用 `headerStyle` 覆盖普通样式，或通过 `--dp-header-height`、`--dp-header-padding-inline`、`--dp-header-title-font-size`、`--dp-header-action-size`、`--dp-header-icon-size` 精确调整。
 
 ## 事件
 

@@ -84,7 +84,7 @@ const drawer = ref<PopupExpose>();
 
 - `width/height` 仅初始化时读取；后续修改 Props 不覆盖用户尺寸，`resetSize()` 读取最新值。关闭再打开保留最近有效尺寸。
 - `size` 提供三档语义尺寸：Popup 为 320×240 / 360×280 / 560×420，Modal 为 420×280 / 520×280 / 720×520，Drawer 为 320×240 / 378×280 / 736×520。
-- `headerSize` 独立提供 40 / 52 / 64px 三档 Header，并同步调整留白、标题字号和操作按钮；不会因面板 `size` 自动改变。
+- `headerSize` 独立提供 40 / 52 / 64px 三档 Header，并同步调整留白、标题字号和全部图标按钮；同一档位内复位、放大、关闭按钮保持统一尺寸，不会因面板 `size` 自动改变。
 - 视口不足时有效最大尺寸受安全边距限制；视口恢复时不自动放大已裁剪尺寸。
 - `keepInViewport=false` 允许自由模式位置离开视口。
 
@@ -219,7 +219,7 @@ const getPopupContainer = (trigger: HTMLElement) =>
 
 ## 样式
 
-BEM 前缀 `.draggable-popup`。可覆盖 `--dp-bg`、`--dp-border-color`、`--dp-radius`、`--dp-shadow`、`--dp-header-height`、`--dp-header-padding-inline`、`--dp-header-title-font-size`、`--dp-header-action-size`、`--dp-header-close-size`、`--dp-header-bg`、`--dp-text-color`、`--dp-primary-color`、`--dp-font-family`、`--dp-font-size`。优先级：`--dp-*` → 尺寸预设 → `--ant-*` → 内置默认值。变量需设置在 Teleport 目标的祖先或全局选择器上。
+BEM 前缀 `.draggable-popup`。可覆盖 `--dp-bg`、`--dp-border-color`、`--dp-radius`、`--dp-shadow`、`--dp-header-height`、`--dp-header-padding-inline`、`--dp-header-title-font-size`、`--dp-header-action-size`、`--dp-header-icon-size`、`--dp-header-bg`、`--dp-text-color`、`--dp-primary-color`、`--dp-font-family`、`--dp-font-size`。优先级：`--dp-*` → 尺寸预设 → `--ant-*` → 内置默认值。变量需设置在 Teleport 目标的祖先或全局选择器上。
 
 Ant Design Vue 4 的 Design Token 不自动生成 CSS 变量；Demo 的 `src/demo/useAntTheme.ts` 演示了如何用 `theme.useToken()` 映射为 `--ant-*` 变量。
 

@@ -73,17 +73,6 @@ describe("Ant Design Vue migration contract", () => {
     w.vm.resetSize();
     expect(w.vm.getRect()).toMatchObject({ width: 444, height: 420 });
   });
-  it("marks the close action with its dedicated hit-target class", async () => {
-    mount(DraggablePopup, {
-      props: { modelValue: true, motion: false },
-      attachTo: document.body,
-    });
-    await flushPromises();
-    const close = document.querySelector<HTMLElement>(
-      ".draggable-popup__close",
-    )!;
-    expect(close).not.toBeNull();
-  });
   it.each(["small", "middle", "large"] as const)(
     "exposes the independent %s header size",
     async (headerSize) => {

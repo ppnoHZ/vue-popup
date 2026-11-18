@@ -335,11 +335,17 @@ test("resize extremes, disabled interactions, outside close and pointercancel", 
   await page.getByLabel("Header 尺寸").selectOption("small");
   await expect.poll(async () => (await header.boundingBox())!.height).toBe(40);
   await page.getByLabel("Header 尺寸").selectOption("middle");
-  const closeBox = await p
-    .getByRole("button", { name: "关闭面板" })
-    .boundingBox();
-  expect(closeBox!.width).toBeGreaterThanOrEqual(32);
-  expect(closeBox!.height).toBeGreaterThanOrEqual(32);
+  const actionSizes = await header
+    .locator(":scope > button")
+    .evaluateAll((els) =>
+      els.map((el) => ({
+        width: (el as HTMLElement).offsetWidth,
+        height: (el as HTMLElement).offsetHeight,
+      })),
+    );
+  expect(actionSizes).toEqual(
+    actionSizes.map(() => ({ width: 32, height: 32 })),
+  );
   await drag(page, p.locator('[data-handle="br"]'), -2000, -2000);
   let r = await box(p);
   expect(r.width).toBe(260);

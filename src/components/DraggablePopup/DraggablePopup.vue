@@ -964,7 +964,6 @@ defineExpose<PopupExpose>({
           <button
             v-if="closable"
             type="button"
-            class="draggable-popup__close"
             aria-label="关闭面板"
             @click="requestClose('close-button', $event)"
           >
