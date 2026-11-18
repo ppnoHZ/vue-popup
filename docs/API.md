@@ -24,6 +24,7 @@ const open = ref(false);
 | `open` / `visible` / `modelValue` | `boolean` | 显隐绑定；优先级依次递减，默认 false。支持 `v-model:open` 与默认 `v-model`。 |
 | `variant` | `'popup' \| 'modal' \| 'drawer'` | `popup`；建议直接使用对应具名组件。 |
 | `size` | `'small' \| 'middle' \| 'large'` | `middle`；语义化初始尺寸，具体预设见下表。显式 `width` / `height` 分别覆盖对应轴。 |
+| `headerSize` | `'small' \| 'middle' \| 'large'` | `middle`；独立控制 Header 高度、留白、标题字号和操作按钮尺寸，不跟随面板 `size`。 |
 | `title` / `footer` / `extra` / `closeIcon` / `okText` / `cancelText` | `PanelContent`（VNode 或返回 VNode 的函数） | 标题默认 `Popup`；确认/取消文字默认 `确定`/`取消`；其他按组件入口渲染。对应插槽可覆盖。 |
 | `placement` | Floating UI `Placement` | Popup 默认 `bottom-start`；Drawer 使用 `left/right/top/bottom`。 |
 | `offset` / `boundaryPadding` | `number` | 均为 8px；分别控制锚点间距和视口安全边界。 |
@@ -63,6 +64,8 @@ const open = ref(false);
 | `large` | 560 × 420 | 720 × 520 | 736 × 520 |
 
 Drawer 停靠边决定主要尺寸：左右侧主要使用预设宽度，上下侧主要使用预设高度。所有预设仍受最小、最大尺寸和视口安全边界限制。
+
+Header 三档高度为 40 / 52 / 64px。可继续使用 `headerStyle` 覆盖普通样式，或通过 `--dp-header-height`、`--dp-header-padding-inline`、`--dp-header-title-font-size`、`--dp-header-action-size`、`--dp-header-close-size` 精确调整。
 
 ## 事件
 

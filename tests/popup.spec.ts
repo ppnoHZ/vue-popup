@@ -328,6 +328,13 @@ test("resize extremes, disabled interactions, outside close and pointercancel", 
   await page.getByTestId("trigger-0").click();
   const p = panel(page);
   await within(p, page);
+  const header = p.locator("header");
+  await expect.poll(async () => (await header.boundingBox())!.height).toBe(52);
+  await page.getByLabel("Header 尺寸").selectOption("large");
+  await expect.poll(async () => (await header.boundingBox())!.height).toBe(64);
+  await page.getByLabel("Header 尺寸").selectOption("small");
+  await expect.poll(async () => (await header.boundingBox())!.height).toBe(40);
+  await page.getByLabel("Header 尺寸").selectOption("middle");
   const closeBox = await p
     .getByRole("button", { name: "关闭面板" })
     .boundingBox();

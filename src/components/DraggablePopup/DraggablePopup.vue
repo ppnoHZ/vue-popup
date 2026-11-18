@@ -82,6 +82,7 @@ const props = withDefaults(defineProps<PopupProps>(), {
   cancelText: "取消",
   variant: "popup",
   size: "middle",
+  headerSize: "middle",
   maximizable: true,
   motion: true,
   motionDuration: 200,
@@ -882,6 +883,7 @@ defineExpose<PopupExpose>({
         "
         :data-mode="mode"
         :data-size="size"
+        :data-header-size="headerSize"
         :data-draggable="canDrag"
         :data-resizable="resizable && !maximized"
         :data-maximizable="maximizable"

@@ -40,6 +40,8 @@ export interface PopupProps {
   variant?: PopupVariant;
   /** Semantic initial dimensions; explicit width/height override each axis. */
   size?: PopupSize;
+  /** Header density, independent from the panel size. */
+  headerSize?: PopupSize;
   maximizable?: boolean;
   motion?: boolean;
   motionDuration?: number;

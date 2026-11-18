@@ -84,6 +84,21 @@ describe("Ant Design Vue migration contract", () => {
     )!;
     expect(close).not.toBeNull();
   });
+  it.each(["small", "middle", "large"] as const)(
+    "exposes the independent %s header size",
+    async (headerSize) => {
+      const w = mount(DraggablePopup, {
+        props: { modelValue: true, size: "large", headerSize, motion: false },
+        attachTo: document.body,
+      });
+      await flushPromises();
+      const panel = document.querySelector<HTMLElement>(".draggable-popup")!;
+      expect(panel.dataset.size).toBe("large");
+      expect(panel.dataset.headerSize).toBe(headerSize);
+      await w.setProps({ headerSize: "middle" });
+      expect(w.vm.getRect()).toMatchObject({ width: 560, height: 420 });
+    },
+  );
   it.each(["popup", "modal"] as const)(
     "allows ordinary %s panels beyond legacy width/height defaults and exposes all resize directions",
     async (variant) => {

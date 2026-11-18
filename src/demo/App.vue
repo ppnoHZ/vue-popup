@@ -10,6 +10,7 @@ import {
 import type {
   Placement,
   PopupExpose,
+  PopupSize,
   ResizeHandle,
 } from "../components/DraggablePopup";
 const visible = reactive([false, false, false, false, false]);
@@ -37,6 +38,7 @@ const draggable = ref(true),
 const snap = ref(true),
   snapDistance = ref(16);
 const placement = ref<Placement>("bottom-start"),
+  headerSize = ref<PopupSize>("middle"),
   width = ref(360),
   height = ref(360);
 const handles: ResizeHandle[] = [
@@ -271,6 +273,14 @@ function popupContainer(trigger: HTMLElement) {
         />外部点击关闭</label
       ><label><input v-model="all" type="checkbox" />全部手柄</label>
       <label
+        >Header 尺寸
+        <select v-model="headerSize" aria-label="Header 尺寸">
+          <option value="small">小</option>
+          <option value="middle">中</option>
+          <option value="large">大</option>
+        </select>
+      </label>
+      <label
         >Placement
         <select v-model="placement">
           <option
@@ -341,6 +351,7 @@ function popupContainer(trigger: HTMLElement) {
                 :placement="placement"
                 :width="width"
                 :height="height"
+                :header-size="headerSize"
                 :draggable="draggable"
                 :resizable="resizable"
                 :snap-to-edge="snap"
