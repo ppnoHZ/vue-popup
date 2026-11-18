@@ -22,6 +22,7 @@ export type CloseReason =
   | "close-button"
   | "outside"
   | "escape"
+  | "navigation"
   | "programmatic"
   | "anchor-removed"
   | "anchor-hidden";
@@ -42,6 +43,8 @@ export interface PopupProps {
   size?: PopupSize;
   /** Header density, independent from the panel size. */
   headerSize?: PopupSize;
+  /** When this key changes while open, request closing without depending on a router. */
+  navigationKey?: string | number;
   maximizable?: boolean;
   motion?: boolean;
   motionDuration?: number;

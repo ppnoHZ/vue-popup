@@ -25,6 +25,7 @@ const open = ref(false);
 | `variant` | `'popup' \| 'modal' \| 'drawer'` | `popup`；建议直接使用对应具名组件。 |
 | `size` | `'small' \| 'middle' \| 'large'` | `middle`；语义化初始尺寸，具体预设见下表。显式 `width` / `height` 分别覆盖对应轴。 |
 | `headerSize` | `'small' \| 'middle' \| 'large'` | `middle`；独立控制 Header 高度、留白、标题字号和操作按钮尺寸，不跟随面板 `size`。 |
+| `navigationKey` | `string \| number` | 未指定；打开时发生变化会以 `navigation` 原因请求关闭。可传 Vue Router 的 `route.fullPath`，组件本身不依赖路由器。 |
 | `title` / `footer` / `extra` / `closeIcon` / `okText` / `cancelText` | `PanelContent`（VNode 或返回 VNode 的函数） | 标题默认 `Popup`；确认/取消文字默认 `确定`/`取消`；其他按组件入口渲染。对应插槽可覆盖。 |
 | `placement` | Floating UI `Placement` | Popup 默认 `bottom-start`；Drawer 使用 `left/right/top/bottom`。 |
 | `offset` / `boundaryPadding` | `number` | 均为 8px；分别控制锚点间距和视口安全边界。 |
@@ -83,7 +84,21 @@ Header 三档高度为 40 / 52 / 64px，所有内置图标按钮统一为 28 / 3
 | `drag-start` / `drag` / `drag-end` | `PopupRect`；移动事件最多每动画帧一次，结束同步提交最终坐标。 |
 | `resize-start` / `resize` / `resize-end` | `PopupRect`；移动事件最多每动画帧一次，结束同步提交最终尺寸。 |
 
-`PopupRect = { x: number; y: number; width: number; height: number }`。`CloseReason`：`trigger`、`close-button`、`outside`、`escape`、`programmatic`、`anchor-removed`、`anchor-hidden`。
+`PopupRect = { x: number; y: number; width: number; height: number }`。`CloseReason`：`trigger`、`close-button`、`outside`、`escape`、`navigation`、`programmatic`、`anchor-removed`、`anchor-hidden`。
+
+路由页面内的面板应优先随页面组件卸载。面板位于持久 Layout、全局工具层或 `KeepAlive` 中时，可显式关联路由：
+
+```vue
+<script setup lang="ts">
+import { useRoute } from "vue-router";
+
+const route = useRoute();
+</script>
+
+<template>
+  <DraggableDrawer v-model:open="open" :navigation-key="route.fullPath" />
+</template>
+```
 
 ## 插槽和方法
 

@@ -642,6 +642,22 @@ describe("DraggablePopup contract", () => {
     expect(w.emitted("close")).toEqual([[{ reason: "close-button" }]]);
     w.unmount();
   });
+  it("requests a navigation close when its router-agnostic key changes", async () => {
+    const w = mount(Popup, {
+      props: { modelValue: true, navigationKey: "/settings" },
+      attachTo: document.body,
+    });
+    await nextTick();
+    await w.setProps({ navigationKey: "/dashboard" });
+    expect(w.emitted("update:modelValue")).toEqual([[false]]);
+    expect(w.emitted("close-request")).toEqual([
+      [{ reason: "navigation", event: undefined }],
+    ]);
+    expect(w.emitted("close")).toBeUndefined();
+    await w.setProps({ modelValue: false });
+    expect(w.emitted("close")).toEqual([[{ reason: "navigation" }]]);
+    w.unmount();
+  });
   it("supports manual trigger, disabled handles, expose and initial-size semantics", async () => {
     const w = mount(Popup, {
       props: {

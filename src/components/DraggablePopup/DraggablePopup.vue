@@ -422,6 +422,12 @@ function requestClose(value: CloseReason, event?: MouseEvent | KeyboardEvent) {
   emit("close-request", { reason: value, event });
   requestOpen(false);
 }
+watch(
+  () => props.navigationKey,
+  (value, previous) => {
+    if (value !== previous && isOpen.value) requestClose("navigation");
+  },
+);
 function requestOpen(value: boolean) {
   emit("update:modelValue", value);
   emit("update:open", value);

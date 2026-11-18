@@ -58,6 +58,7 @@ const drawer = ref<PopupExpose>();
 | variant                 | 'popup'、'drawer'、'modal'       | popup（open/visible 无锚点时自动 modal） |
 | size                    | 'small'、'middle'、'large'       | middle；显式 width/height 单轴覆盖       |
 | headerSize              | 'small'、'middle'、'large'       | middle；独立于面板 size                  |
+| navigationKey           | string、number                   | 变化时请求关闭；可传 route.fullPath      |
 | title                   | string                           | Popup                                    |
 | showHeader              | boolean                          | true                                     |
 | dragHandle              | string、HTMLElement、函数、false | 内置 Header                              |
@@ -109,6 +110,7 @@ type CloseReason =
   | "close-button"
   | "outside"
   | "escape"
+  | "navigation"
   | "programmatic"
   | "anchor-removed"
   | "anchor-hidden";
