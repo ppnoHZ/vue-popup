@@ -179,6 +179,13 @@
   width: 14px;
   height: 14px;
 }
+.draggable-popup__header .draggable-popup__close {
+  position: relative;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  margin: -4px;
+}
 .draggable-popup__body {
   flex: 1;
   min-height: 0;

@@ -8,6 +8,82 @@ afterEach(() => {
   document.body.style.overflow = "";
 });
 describe("Ant Design Vue migration contract", () => {
+  it.each([
+    ["popup", "small", 320, 240],
+    ["popup", "middle", 360, 280],
+    ["popup", "large", 560, 420],
+    ["modal", "small", 420, 280],
+    ["modal", "middle", 520, 280],
+    ["modal", "large", 720, 520],
+  ] as const)(
+    "applies the %s %s size preset",
+    async (variant, size, width, height) => {
+      const w = mount(DraggablePopup, {
+        props: { modelValue: true, variant, size, motion: false },
+        attachTo: document.body,
+      });
+      await flushPromises();
+      expect(w.vm.getRect().width).toBe(width);
+      expect(w.vm.getRect().height).toBe(height);
+      expect(
+        document.querySelector<HTMLElement>(".draggable-popup")!.dataset.size,
+      ).toBe(size);
+    },
+  );
+  it.each([
+    ["small", 320, 240],
+    ["middle", 378, 280],
+    ["large", 736, 520],
+  ] as const)(
+    "applies the drawer %s preset on its placement axis",
+    async (size, width, height) => {
+      const side = mount(DraggableDrawer, {
+        props: { open: true, size, motion: false },
+        attachTo: document.body,
+      });
+      await flushPromises();
+      expect(side.vm.getRect().width).toBe(width);
+      side.unmount();
+
+      const bottom = mount(DraggableDrawer, {
+        props: { open: true, size, placement: "bottom", motion: false },
+        attachTo: document.body,
+      });
+      await flushPromises();
+      expect(bottom.vm.getRect().height).toBe(height);
+      expect(
+        document.querySelector<HTMLElement>(".draggable-popup")!.dataset.size,
+      ).toBe(size);
+    },
+  );
+  it("lets explicit dimensions override size per axis and reset reads the latest preset", async () => {
+    const w = mount(DraggablePopup, {
+      props: {
+        modelValue: true,
+        size: "small",
+        width: 444,
+        motion: false,
+      },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    expect(w.vm.getRect()).toMatchObject({ width: 444, height: 240 });
+    await w.setProps({ size: "large" });
+    expect(w.vm.getRect()).toMatchObject({ width: 444, height: 240 });
+    w.vm.resetSize();
+    expect(w.vm.getRect()).toMatchObject({ width: 444, height: 420 });
+  });
+  it("marks the close action with its dedicated hit-target class", async () => {
+    mount(DraggablePopup, {
+      props: { modelValue: true, motion: false },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    const close = document.querySelector<HTMLElement>(
+      ".draggable-popup__close",
+    )!;
+    expect(close).not.toBeNull();
+  });
   it.each(["popup", "modal"] as const)(
     "allows ordinary %s panels beyond legacy width/height defaults and exposes all resize directions",
     async (variant) => {

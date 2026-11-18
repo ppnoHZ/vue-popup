@@ -56,6 +56,7 @@ const drawer = ref<PopupExpose>();
 | modelValue              | boolean                          | —                                        |
 | open / visible          | boolean，Antdv 风格绑定          | —                                        |
 | variant                 | 'popup'、'drawer'、'modal'       | popup（open/visible 无锚点时自动 modal） |
+| size                    | 'small'、'middle'、'large'       | middle；显式 width/height 单轴覆盖       |
 | title                   | string                           | Popup                                    |
 | showHeader              | boolean                          | true                                     |
 | dragHandle              | string、HTMLElement、函数、false | 内置 Header                              |
@@ -81,6 +82,7 @@ const drawer = ref<PopupExpose>();
 | trigger                 | 'click' 或 'manual'              | click                                    |
 
 - `width/height` 仅初始化时读取；后续修改 Props 不覆盖用户尺寸，`resetSize()` 读取最新值。关闭再打开保留最近有效尺寸。
+- `size` 提供三档语义尺寸：Popup 为 320×240 / 360×280 / 560×420，Modal 为 420×280 / 520×280 / 720×520，Drawer 为 320×240 / 378×280 / 736×520。
 - 视口不足时有效最大尺寸受安全边距限制；视口恢复时不自动放大已裁剪尺寸。
 - `keepInViewport=false` 允许自由模式位置离开视口。
 

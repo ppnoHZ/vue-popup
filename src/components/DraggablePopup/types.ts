@@ -16,6 +16,7 @@ export type ResizeHandle =
   "tl" | "tm" | "tr" | "mr" | "br" | "bm" | "bl" | "ml";
 export type PopupMode = "anchored" | "detached" | "docked" | "centered";
 export type PopupVariant = "popup" | "drawer" | "modal";
+export type PopupSize = "small" | "middle" | "large";
 export type CloseReason =
   | "trigger"
   | "close-button"
@@ -37,6 +38,8 @@ export interface PopupProps {
   /** Ant Design Vue 3 compatibility; open takes precedence. */
   visible?: boolean;
   variant?: PopupVariant;
+  /** Semantic initial dimensions; explicit width/height override each axis. */
+  size?: PopupSize;
   maximizable?: boolean;
   motion?: boolean;
   motionDuration?: number;

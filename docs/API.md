@@ -23,6 +23,7 @@ const open = ref(false);
 | --- | --- | --- |
 | `open` / `visible` / `modelValue` | `boolean` | 显隐绑定；优先级依次递减，默认 false。支持 `v-model:open` 与默认 `v-model`。 |
 | `variant` | `'popup' \| 'modal' \| 'drawer'` | `popup`；建议直接使用对应具名组件。 |
+| `size` | `'small' \| 'middle' \| 'large'` | `middle`；语义化初始尺寸，具体预设见下表。显式 `width` / `height` 分别覆盖对应轴。 |
 | `title` / `footer` / `extra` / `closeIcon` / `okText` / `cancelText` | `PanelContent`（VNode 或返回 VNode 的函数） | 标题默认 `Popup`；确认/取消文字默认 `确定`/`取消`；其他按组件入口渲染。对应插槽可覆盖。 |
 | `placement` | Floating UI `Placement` | Popup 默认 `bottom-start`；Drawer 使用 `left/right/top/bottom`。 |
 | `offset` / `boundaryPadding` | `number` | 均为 8px；分别控制锚点间距和视口安全边界。 |
@@ -54,6 +55,14 @@ const open = ref(false);
 | `afterClose` | `() => void` | 关闭过渡完成回调。 |
 
 尺寸和坐标使用视口 CSS 像素。关闭再打开保留用户调整的有效尺寸；`resetPosition()` 恢复锚点或停靠位置，`resetSize()` 恢复最新尺寸 Props。放大暂时禁止拖动和缩放。页面滚动条宽高从可用视口扣除。自定义拖动句柄应设置 `cursor: move; touch-action: none`。
+
+| size | Popup | Modal | Drawer |
+| --- | --- | --- | --- |
+| `small` | 320 × 240 | 420 × 280 | 320 × 240 |
+| `middle` | 360 × 280 | 520 × 280 | 378 × 280 |
+| `large` | 560 × 420 | 720 × 520 | 736 × 520 |
+
+Drawer 停靠边决定主要尺寸：左右侧主要使用预设宽度，上下侧主要使用预设高度。所有预设仍受最小、最大尺寸和视口安全边界限制。
 
 ## 事件
 

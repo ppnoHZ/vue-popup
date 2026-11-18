@@ -19,6 +19,8 @@ import type {
   PopupMode,
   PopupProps,
   PopupRect,
+  PopupSize,
+  PopupVariant,
   ResizeHandle,
 } from "./types";
 import {
@@ -35,6 +37,27 @@ import { lockBody } from "./composables/scrollLock";
 import { createFramePublisher } from "./composables/framePublisher";
 import { viewportSize } from "./composables/viewport";
 import { resolveDragHandle } from "./composables/dragHandle";
+
+const sizePresets: Record<
+  PopupSize,
+  Record<PopupVariant, { width: number; height: number }>
+> = {
+  small: {
+    popup: { width: 320, height: 240 },
+    modal: { width: 420, height: 280 },
+    drawer: { width: 320, height: 240 },
+  },
+  middle: {
+    popup: { width: 360, height: 280 },
+    modal: { width: 520, height: 280 },
+    drawer: { width: 378, height: 280 },
+  },
+  large: {
+    popup: { width: 560, height: 420 },
+    modal: { width: 720, height: 520 },
+    drawer: { width: 736, height: 520 },
+  },
+};
 
 const props = withDefaults(defineProps<PopupProps>(), {
   showHeader: true,
@@ -58,6 +81,7 @@ const props = withDefaults(defineProps<PopupProps>(), {
   okText: "确定",
   cancelText: "取消",
   variant: "popup",
+  size: "middle",
   maximizable: true,
   motion: true,
   motionDuration: 200,
@@ -177,18 +201,12 @@ const limits = computed(() => ({
   maxHeight: props.maxHeight ?? Number.MAX_SAFE_INTEGER,
   boundaryPadding: props.boundaryPadding,
 }));
+const sizePreset = () =>
+  (sizePresets[props.size] ?? sizePresets.middle)[effectiveVariant.value];
 const initialWidth = () =>
-  resolveLength(
-    props.width ??
-      (effectiveVariant.value === "modal"
-        ? 520
-        : effectiveVariant.value === "drawer"
-          ? 378
-          : 360),
-    "width",
-    360,
-  );
-const initialHeight = () => resolveLength(props.height ?? 280, "height", 280);
+  resolveLength(props.width ?? sizePreset().width, "width", 360);
+const initialHeight = () =>
+  resolveLength(props.height ?? sizePreset().height, "height", 280);
 const hasRendered = ref(false);
 const container = computed(() =>
   typeof props.getContainer === "function"
@@ -863,6 +881,7 @@ defineExpose<PopupExpose>({
           (showHeader ? `${id}-title` : undefined)
         "
         :data-mode="mode"
+        :data-size="size"
         :data-draggable="canDrag"
         :data-resizable="resizable && !maximized"
         :data-maximizable="maximizable"
@@ -943,6 +962,7 @@ defineExpose<PopupExpose>({
           <button
             v-if="closable"
             type="button"
+            class="draggable-popup__close"
             aria-label="关闭面板"
             @click="requestClose('close-button', $event)"
           >

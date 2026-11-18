@@ -328,6 +328,11 @@ test("resize extremes, disabled interactions, outside close and pointercancel", 
   await page.getByTestId("trigger-0").click();
   const p = panel(page);
   await within(p, page);
+  const closeBox = await p
+    .getByRole("button", { name: "关闭面板" })
+    .boundingBox();
+  expect(closeBox!.width).toBeGreaterThanOrEqual(32);
+  expect(closeBox!.height).toBeGreaterThanOrEqual(32);
   await drag(page, p.locator('[data-handle="br"]'), -2000, -2000);
   let r = await box(p);
   expect(r.width).toBe(260);
