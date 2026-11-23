@@ -79,7 +79,7 @@ const drawer = ref<PopupExpose>();
 | closeOnOutsideClick     | boolean                          | false                                    |
 | closeOnEsc              | boolean                          | true                                     |
 | motion / motionDuration | boolean / number                 | true / 200（ms）                         |
-| initialPosition        | 'top' / 'bottom'                 | 未指定；居中模式面板的垂直贴边位置        |
+| initialPosition        | InitialPosition                  | 未指定；居中面板位置：top/bottom、像素或视口高度百分比 |
 | teleportTo              | string 或 HTMLElement            | body                                     |
 | zIndex                  | number                           | 2000                                     |
 | trigger                 | 'click' 或 'manual'              | click                                    |

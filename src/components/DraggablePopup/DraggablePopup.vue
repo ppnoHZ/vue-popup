@@ -208,6 +208,16 @@ const initialWidth = () =>
   resolveLength(props.width ?? sizePreset().width, "width", 360);
 const initialHeight = () =>
   resolveLength(props.height ?? sizePreset().height, "height", 280);
+function resolveInitialPositionY(viewportHeight: number) {
+  const position = props.initialPosition;
+  if (position === undefined) return undefined;
+  if (position === "top") return props.boundaryPadding;
+  if (position === "bottom")
+    return viewportHeight - props.boundaryPadding - rect.height;
+  if (typeof position === "number") return position;
+  const value = Number.parseFloat(position);
+  return position.endsWith("%") ? (value / 100) * viewportHeight : value;
+}
 const hasRendered = ref(false);
 const container = computed(() =>
   typeof props.getContainer === "function"
@@ -363,16 +373,10 @@ function updatePosition() {
     clip();
     rect.x = (viewport.width - rect.width) / 2;
     rect.y =
-      props.initialPosition === "top"
-        ? props.boundaryPadding
-        : props.initialPosition === "bottom"
-          ? viewport.height - props.boundaryPadding - rect.height
-          : props.centered
-            ? (viewport.height - rect.height) / 2
-            : Math.min(
-                100,
-                viewport.height - props.boundaryPadding - rect.height,
-              );
+      resolveInitialPositionY(viewport.height) ??
+      (props.centered
+        ? (viewport.height - rect.height) / 2
+        : Math.min(100, viewport.height - props.boundaryPadding - rect.height));
     clip();
   } else if (mode.value === "anchored") {
     clip();

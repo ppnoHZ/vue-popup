@@ -17,6 +17,8 @@ export type ResizeHandle =
 export type PopupMode = "anchored" | "detached" | "docked" | "centered";
 export type PopupVariant = "popup" | "drawer" | "modal";
 export type PopupSize = "small" | "middle" | "large";
+export type InitialPosition =
+  "top" | "bottom" | number | `${number}px` | `${number}%`;
 export type CloseReason =
   | "trigger"
   | "close-button"
@@ -48,7 +50,7 @@ export interface PopupProps {
   maximizable?: boolean;
   motion?: boolean;
   motionDuration?: number;
-  initialPosition?: "top" | "bottom";
+  initialPosition?: InitialPosition;
   title?: PanelContent;
   footer?: PanelContent;
   extra?: PanelContent;
