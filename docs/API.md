@@ -42,6 +42,7 @@ const open = ref(false);
 | `snapThreshold` | `number` | 16px；拖动到视口边缘时吸附。 |
 | `maximizable` | `boolean` | true；标题栏显示放大/还原按钮。 |
 | `motion` / `motionDuration` | `boolean` / `number` | true / 200ms；遵循减少动态效果设置。 |
+| `initialPosition` | `'top' \| 'bottom'` | 未指定；设置居中模式面板的垂直贴边位置，分别受 `boundaryPadding` 限制；未指定时沿用原有位置。 |
 | `closable` / `keyboard` / `closeOnEsc` | `boolean` | true / 未指定 / true；关闭按钮与 Escape 控制。 |
 | `closeOnOutsideClick` | `boolean` | false。 |
 | `mask` / `maskClosable` | `boolean` | 基础 Popup 为 false / true；Modal、Drawer 默认带遮罩。 |

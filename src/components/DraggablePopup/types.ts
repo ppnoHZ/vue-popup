@@ -48,6 +48,7 @@ export interface PopupProps {
   maximizable?: boolean;
   motion?: boolean;
   motionDuration?: number;
+  initialPosition?: "top" | "bottom";
   title?: PanelContent;
   footer?: PanelContent;
   extra?: PanelContent;

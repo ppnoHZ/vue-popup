@@ -24,6 +24,35 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("DraggablePopup contract", () => {
+  it.each([
+    ["top", 8],
+    ["bottom", window.innerHeight - 8 - 200],
+  ] as const)(
+    "positions a centered panel at the %s edge",
+    async (position, y) => {
+      const w = mount(Popup, {
+        props: {
+          open: true,
+          initialPosition: position,
+          height: 200,
+          boundaryPadding: 8,
+          motion: false,
+        },
+        attachTo: document.body,
+      });
+      try {
+        await flushPromises();
+        expect(w.vm.getRect().y).toBe(y);
+        const nextPosition = position === "top" ? "bottom" : "top";
+        await w.setProps({ initialPosition: nextPosition });
+        expect(w.vm.getRect().y).toBe(
+          nextPosition === "top" ? 8 : window.innerHeight - 8 - 200,
+        );
+      } finally {
+        w.unmount();
+      }
+    },
+  );
   it("drags only from a headerless custom selector and excludes interactive descendants and nested panels", async () => {
     const w = mount(Popup, {
       props: {

@@ -362,9 +362,17 @@ function updatePosition() {
   } else if (mode.value === "centered") {
     clip();
     rect.x = (viewport.width - rect.width) / 2;
-    rect.y = props.centered
-      ? (viewport.height - rect.height) / 2
-      : Math.min(100, viewport.height - props.boundaryPadding - rect.height);
+    rect.y =
+      props.initialPosition === "top"
+        ? props.boundaryPadding
+        : props.initialPosition === "bottom"
+          ? viewport.height - props.boundaryPadding - rect.height
+          : props.centered
+            ? (viewport.height - rect.height) / 2
+            : Math.min(
+                100,
+                viewport.height - props.boundaryPadding - rect.height,
+              );
     clip();
   } else if (mode.value === "anchored") {
     clip();
@@ -387,6 +395,7 @@ watch(
     props.boundaryPadding,
     props.keepInViewport,
     props.centered,
+    props.initialPosition,
     side.value,
   ],
   updatePosition,
